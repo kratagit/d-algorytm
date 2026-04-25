@@ -5,7 +5,7 @@ import json
 class DAlgorithmApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Inteligentny Symulator D-Algorytmu PRO (Python)")
+        self.root.title("Inteligentny Symulator D-Algorytmu PRO (Prawdziwe Ikony)")
         self.root.geometry("1200x800")
         
         # Stan aplikacji
@@ -19,9 +19,9 @@ class DAlgorithmApp:
         
         # Stan algorytmu
         self.user_choices = {}
-        self.decision_log = []
+        self.decision_log =[]
         self.algo_state = {}
-        self.steps =[]
+        self.steps = []
         self.cols =[]
 
         self.setup_ui()
@@ -40,7 +40,7 @@ class DAlgorithmApp:
         self.right_frame = ttk.Frame(self.paned)
         self.paned.add(self.right_frame, weight=2)
         
-        # Menu Kontekstowe (Prawy Przycisk Myszy)
+        # Menu Kontekstowe
         self.context_menu = tk.Menu(self.root, tearoff=0)
         self.context_menu.add_command(label="Edytuj (Zmień nazwę)", command=self.cmd_edit_comp)
         self.context_menu.add_separator()
@@ -60,7 +60,7 @@ class DAlgorithmApp:
         ttk.Button(toolbar, text="+ Wejście (IN)", command=lambda: self.add_comp('IN'), **btn_style).pack(pady=1)
         ttk.Button(toolbar, text="+ Węzeł", command=lambda: self.add_comp('NODE'), **btn_style).pack(pady=1)
         
-        for g in ['AND', 'OR', 'NAND', 'NOR', 'XOR', 'XNOR', 'NOT']:
+        for g in['AND', 'OR', 'NAND', 'NOR', 'XOR', 'XNOR', 'NOT']:
             ttk.Button(toolbar, text=f"Bramka {g}", command=lambda t=g: self.add_comp(t), **btn_style).pack(pady=1)
             
         ttk.Separator(toolbar, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=8)
@@ -77,7 +77,7 @@ class DAlgorithmApp:
         ttk.Button(toolbar, text="Zbuduj Przykład", command=self.load_user_example, **btn_style).pack(pady=1)
         ttk.Button(toolbar, text="Wyczyść planszę", command=self.clear_workspace, **btn_style).pack(pady=1)
         
-        info = "ŁĄCZENIE:\n1. Kliknij czerwone\n2. Kliknij niebieskie\n(Ponowne kliknięcie\n usuwa kabel)\n\nZARZĄDZANIE:\nPrawy klik na bramkę\n(Menu: Edytuj/Usuń)"
+        info = "ŁĄCZENIE:\n1. Kliknij czerwone\n2. Kliknij niebieskie\n(Ponowne klik. usuwa)\n\nZARZĄDZANIE:\nPrawy klik na bramkę\n(Menu: Edytuj/Usuń)"
         ttk.Label(toolbar, text=info, foreground="gray", font=("Arial", 8)).pack(side=tk.BOTTOM, pady=10)
 
         self.canvas = tk.Canvas(self.left_frame, bg="#e8eaed", cursor="crosshair")
@@ -125,50 +125,27 @@ class DAlgorithmApp:
     # --- ZAPIS I ODCZYT PLIKÓW ---
     
     def save_workspace(self):
-        file_path = filedialog.asksaveasfilename(
-            defaultextension=".json",
-            filetypes=[("Pliki układów JSON", "*.json"), ("Wszystkie pliki", "*.*")],
-            title="Zapisz układ jako..."
-        )
-        if not file_path:
-            return
-            
-        data = {
-            'components': self.components,
-            'counter': self.counter,
-            'target': self.target_var.get(),
-            'fault_type': self.fault_type_var.get()
-        }
+        file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON", "*.json")], title="Zapisz układ")
+        if not file_path: return
+        data = {'components': self.components, 'counter': self.counter, 'target': self.target_var.get(), 'fault_type': self.fault_type_var.get()}
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=4)
+            with open(file_path, 'w', encoding='utf-8') as f: json.dump(data, f, indent=4)
             messagebox.showinfo("Sukces", "Pomyślnie zapisano układ!")
-        except Exception as e:
-            messagebox.showerror("Błąd zapisu", f"Nie udało się zapisać pliku:\n{e}")
+        except Exception as e: messagebox.showerror("Błąd zapisu", f"Nie udało się zapisać pliku:\n{e}")
 
     def load_workspace(self):
-        file_path = filedialog.askopenfilename(
-            filetypes=[("Pliki układów JSON", "*.json"), ("Wszystkie pliki", "*.*")],
-            title="Wczytaj układ"
-        )
-        if not file_path:
-            return
-            
+        file_path = filedialog.askopenfilename(filetypes=[("JSON", "*.json")], title="Wczytaj układ")
+        if not file_path: return
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                
+            with open(file_path, 'r', encoding='utf-8') as f: data = json.load(f)
             self.clear_workspace()
             self.components = data.get('components', {})
             self.counter = data.get('counter', 0)
-            
             self.update_target_cb()
             self.target_var.set(data.get('target', ''))
             self.fault_type_var.set(data.get('fault_type', 'sa1'))
-            
             self.redraw()
-        except Exception as e:
-            messagebox.showerror("Błąd wczytywania", f"Nie udało się wczytać pliku:\n{e}")
+        except Exception as e: messagebox.showerror("Błąd", f"Nie udało się wczytać pliku:\n{e}")
 
     # --- ZARZĄDZANIE KOMPONENTAMI ---
 
@@ -185,8 +162,7 @@ class DAlgorithmApp:
     def update_target_cb(self):
         targets = [c for c in self.components if self.components[c]['type'] not in ['IN']]
         self.target_cb['values'] = targets
-        if targets and not self.target_var.get():
-            self.target_cb.current(0)
+        if targets and not self.target_var.get(): self.target_cb.current(0)
 
     def clear_workspace(self):
         self.components.clear()
@@ -200,21 +176,19 @@ class DAlgorithmApp:
 
     def clear_results(self):
         self.tree.delete(*self.tree.get_children())
-        for widget in self.decisions_inner.winfo_children():
-            widget.destroy()
+        for widget in self.decisions_inner.winfo_children(): widget.destroy()
 
     def load_user_example(self):
         self.clear_workspace()
         self.counter = 7
         
         comps =[
-            ('IN', 50, 50, 'X8'), ('IN', 150, 100, 'X9'), ('IN', 250, 150, 'X10'), ('IN', 380, 200, 'X11'),
+            ('IN', 50, 50, 'X8'), ('IN', 160, 100, 'X9'), ('IN', 280, 150, 'X10'), ('IN', 420, 200, 'X11'),
             ('IN', 50, 350, 'X12'), ('IN', 180, 400, 'X13'), ('IN', 320, 400, 'X14'),
-            ('NOT', 120, 50, 'G0'), ('AND', 220, 75, 'G1'), ('NAND', 320, 100, 'G2'), ('OR', 460, 125, 'G3'),
+            ('NOT', 120, 50, 'G0'), ('AND', 220, 75, 'G1'), ('NAND', 340, 100, 'G2'), ('OR', 480, 125, 'G3'),
             ('NOR', 150, 330, 'G4'), ('XOR', 300, 350, 'G5'), ('XNOR', 460, 350, 'G6')
         ]
-        for c in comps:
-            self.add_comp(c[0], c[1], c[2], c[3])
+        for c in comps: self.add_comp(c[0], c[1], c[2], c[3])
             
         c = self.components
         c['G0']['inputs'][0] = 'X8'; c['G1']['inputs'][0] = 'G0'; c['G1']['inputs'][1] = 'X9'
@@ -241,17 +215,14 @@ class DAlgorithmApp:
         if new_id and new_id != old_id:
             new_id = "".join(c for c in new_id if c.isalnum() or c == '_').upper()
             if not new_id: return
-            if new_id in self.components:
-                messagebox.showerror("Błąd", "Ta nazwa jest już zajęta!")
-                return
+            if new_id in self.components: return messagebox.showerror("Błąd", "Ta nazwa jest już zajęta!")
                 
             self.components[new_id] = self.components.pop(old_id)
             self.components[new_id]['id'] = new_id
             
             for c in self.components.values():
                 for i in range(len(c['inputs'])):
-                    if c['inputs'][i] == old_id: 
-                        c['inputs'][i] = new_id
+                    if c['inputs'][i] == old_id: c['inputs'][i] = new_id
                         
             if self.target_var.get() == old_id: self.target_var.set(new_id)
             if self.active_out == old_id: self.active_out = new_id
@@ -267,8 +238,7 @@ class DAlgorithmApp:
         del self.components[cid]
         for c in self.components.values():
             for i in range(len(c['inputs'])):
-                if c['inputs'][i] == cid:
-                    c['inputs'][i] = None
+                if c['inputs'][i] == cid: c['inputs'][i] = None
                     
         if self.active_out == cid: self.active_out = None
         if self.target_var.get() == cid: self.target_var.set('')
@@ -277,7 +247,7 @@ class DAlgorithmApp:
         self.clear_results()
         self.redraw()
 
-    # --- RYSOWANIE PLANSZY ---
+    # --- RYSOWANIE IKON BRAMEK LOGICZNYCH ---
 
     def redraw(self):
         self.canvas.delete("all")
@@ -285,56 +255,104 @@ class DAlgorithmApp:
         self.draw_components()
 
     def draw_components(self):
-        self.hitboxes =[] 
-        
+        self.hitboxes =[]
         for cid, c in self.components.items():
             x, y = c['x'], c['y']
             w, h = 60, 40
+            color = "#3498db" if self.dragging == cid else "#2c3e50"
+            
+            # Tło pod całą bramką dla łapania myszką
+            self.canvas.create_rectangle(x, y-15, x+w, y+h, fill="", outline="")
+            self.hitboxes.append({'type': 'comp', 'id': cid, 'x': x, 'y': y-15, 'w': w, 'h': h+15})
             
             if c['type'] == 'NODE':
                 self.canvas.create_oval(x, y, x+12, y+12, fill="#2c3e50")
-                self.canvas.create_text(x+6, y-10, text=cid, font=("Arial", 8, "bold"))
+                self.canvas.create_text(x+6, y-10, text=cid, font=("Arial", 8, "bold"), fill="#2c3e50")
                 
                 ix, iy = x - 4, y + 2
                 self.canvas.create_oval(ix, iy, ix+8, iy+8, fill="#3498db", outline="white")
                 self.hitboxes.append({'type': 'port_in', 'id': cid, 'idx': 0, 'x': ix, 'y': iy, 'w': 8, 'h': 8})
                 
                 ox, oy = x + 8, y + 2
-                color = "#f1c40f" if self.active_out == cid else "#e74c3c"
-                self.canvas.create_oval(ox, oy, ox+8, oy+8, fill=color, outline="white")
+                pc = "#f1c40f" if self.active_out == cid else "#e74c3c"
+                self.canvas.create_oval(ox, oy, ox+8, oy+8, fill=pc, outline="white")
                 self.hitboxes.append({'type': 'port_out', 'id': cid, 'x': ox, 'y': oy, 'w': 8, 'h': 8})
-                
-                self.hitboxes.append({'type': 'comp', 'id': cid, 'x': x, 'y': y, 'w': 12, 'h': 12})
                 continue
                 
             if c['type'] == 'IN':
                 self.canvas.create_oval(x, y, x+w, y+h, fill="#e0f7fa", outline="#0097e6", width=2)
-            else:
-                self.canvas.create_rectangle(x, y, x+w, y+h, fill="white", outline="#2c3e50", width=2)
+                self.canvas.create_text(x+w/2, y+20, text=cid, font=("Arial", 10, "bold"), fill="#0097e6")
                 
-            self.canvas.create_text(x+w/2, y+12, text=cid, font=("Arial", 10, "bold"))
-            self.canvas.create_text(x+w/2, y+28, text=c['type'], font=("Arial", 8), fill="gray")
+                ox, oy = x + w - 4, y + 16
+                pc = "#f1c40f" if self.active_out == cid else "#e74c3c"
+                self.canvas.create_oval(ox, oy, ox+8, oy+8, fill=pc, outline="white")
+                self.hitboxes.append({'type': 'port_out', 'id': cid, 'x': ox, 'y': oy, 'w': 8, 'h': 8})
+                continue
+                
+            # --- RYSOWANIE GEOMETRII BRAMEK ---
+            sx, sy = x + 10, y
+            gtype = c['type']
             
-            self.hitboxes.append({'type': 'comp', 'id': cid, 'x': x, 'y': y, 'w': w, 'h': h})
+            # Etykieta (Nazwa) nad bramką
+            self.canvas.create_text(x+w/2, y-8, text=cid, font=("Arial", 10, "bold"), fill="#2c3e50")
             
-            oy = y + h/2 - 4
-            ox = x + w - 4
-            color = "#f1c40f" if self.active_out == cid else "#e74c3c"
-            self.canvas.create_oval(ox, oy, ox+8, oy+8, fill=color, outline="white")
+            # Linie wejściowe (wtyczki)
+            if gtype == 'NOT':
+                self.canvas.create_line(x, sy+20, sx, sy+20, fill=color, width=2)
+            else:
+                self.canvas.create_line(x, sy+10, sx+8, sy+10, fill=color, width=2)
+                self.canvas.create_line(x, sy+30, sx+8, sy+30, fill=color, width=2)
+                
+            # Linia wyjściowa (wtyczka)
+            out_start = sx + 40
+            if gtype in['NAND', 'NOR', 'XNOR']: out_start = sx + 48
+            elif gtype == 'NOT': out_start = sx + 38
+            self.canvas.create_line(out_start, sy+20, x+60, sy+20, fill=color, width=2)
+            
+            # Ikona AND / NAND
+            if gtype in ['AND', 'NAND']:
+                self.canvas.create_rectangle(sx, sy, sx+20, sy+40, fill="white", outline="")
+                self.canvas.create_arc(sx, sy, sx+40, sy+40, start=-90, extent=180, fill="white", outline="")
+                self.canvas.create_line(sx, sy, sx+20, sy, fill=color, width=2)
+                self.canvas.create_line(sx, sy+40, sx+20, sy+40, fill=color, width=2)
+                self.canvas.create_line(sx, sy, sx, sy+40, fill=color, width=2)
+                self.canvas.create_arc(sx, sy, sx+40, sy+40, start=-90, extent=180, style=tk.ARC, outline=color, width=2)
+                
+            # Ikona OR / NOR / XOR / XNOR
+            elif gtype in ['OR', 'NOR', 'XOR', 'XNOR']:
+                pts =[sx, sy, sx, sy, sx+20, sy, sx+40, sy+20, sx+40, sy+20, sx+20, sy+40, sx, sy+40, sx, sy+40, sx+10, sy+20, sx+10, sy+20]
+                self.canvas.create_polygon(pts, smooth=True, fill="white", outline=color, width=2)
+                if gtype in ['XOR', 'XNOR']:
+                    xpts =[sx-6, sy, sx-6, sy, sx+4, sy+20, sx+4, sy+20, sx-6, sy+40, sx-6, sy+40]
+                    self.canvas.create_line(xpts, smooth=True, fill=color, width=2)
+            
+            # Ikona NOT
+            elif gtype == 'NOT':
+                self.canvas.create_polygon(sx, sy+5, sx+30, sy+20, sx, sy+35, fill="white", outline=color, width=2)
+                
+            # Kółko negacji na wyjściu
+            if gtype in['NAND', 'NOR', 'XNOR']:
+                self.canvas.create_oval(sx+40, sy+16, sx+48, sy+24, fill="white", outline=color, width=2)
+            elif gtype == 'NOT':
+                self.canvas.create_oval(sx+30, sy+16, sx+38, sy+24, fill="white", outline=color, width=2)
+                
+            # Porty na brzegach bounding-boxa (klikane niebieskie/czerwone)
+            ox, oy = x + w - 4, y + 16
+            pc = "#f1c40f" if self.active_out == cid else "#e74c3c"
+            self.canvas.create_oval(ox, oy, ox+8, oy+8, fill=pc, outline="white")
             self.hitboxes.append({'type': 'port_out', 'id': cid, 'x': ox, 'y': oy, 'w': 8, 'h': 8})
             
-            if c['type'] != 'IN':
-                if c['type'] == 'NOT':
-                    ix, iy = x - 4, y + h/2 - 4
-                    self.canvas.create_oval(ix, iy, ix+8, iy+8, fill="#3498db", outline="white")
-                    self.hitboxes.append({'type': 'port_in', 'id': cid, 'idx': 0, 'x': ix, 'y': iy, 'w': 8, 'h': 8})
-                else:
-                    iy1, iy2 = y + h*0.25 - 4, y + h*0.75 - 4
-                    ix = x - 4
-                    self.canvas.create_oval(ix, iy1, ix+8, iy1+8, fill="#3498db", outline="white")
-                    self.canvas.create_oval(ix, iy2, ix+8, iy2+8, fill="#3498db", outline="white")
-                    self.hitboxes.append({'type': 'port_in', 'id': cid, 'idx': 0, 'x': ix, 'y': iy1, 'w': 8, 'h': 8})
-                    self.hitboxes.append({'type': 'port_in', 'id': cid, 'idx': 1, 'x': ix, 'y': iy2, 'w': 8, 'h': 8})
+            ix = x - 4
+            if gtype == 'NOT':
+                iy = y + 16
+                self.canvas.create_oval(ix, iy, ix+8, iy+8, fill="#3498db", outline="white")
+                self.hitboxes.append({'type': 'port_in', 'id': cid, 'idx': 0, 'x': ix, 'y': iy, 'w': 8, 'h': 8})
+            else:
+                iy1, iy2 = y + 6, y + 26
+                self.canvas.create_oval(ix, iy1, ix+8, iy1+8, fill="#3498db", outline="white")
+                self.canvas.create_oval(ix, iy2, ix+8, iy2+8, fill="#3498db", outline="white")
+                self.hitboxes.append({'type': 'port_in', 'id': cid, 'idx': 0, 'x': ix, 'y': iy1, 'w': 8, 'h': 8})
+                self.hitboxes.append({'type': 'port_in', 'id': cid, 'idx': 1, 'x': ix, 'y': iy2, 'w': 8, 'h': 8})
 
     def draw_wires(self):
         for cid, c in self.components.items():
@@ -356,7 +374,7 @@ class DAlgorithmApp:
         
         self.canvas.create_line(x1, y1, x1+40, y1, x2-40, y2, x2, y2, smooth=True, fill="#34495e", width=2)
 
-    # --- OBSŁUGA ZDARZEŃ MYSZY ---
+    # --- OBSŁUGA MYSZY ---
 
     def get_hitbox(self, x, y):
         for hb in reversed(self.hitboxes):
@@ -463,7 +481,7 @@ class DAlgorithmApp:
                 if self.eval_gate(c['type'], v0, v1) == req_h:
                     combos.append({c['inputs'][0]: v0, c['inputs'][1]: v1})
                     
-        clean_combos = []
+        clean_combos =[]
         for co in combos:
             cl = {}
             if c['inputs'][0]: cl[c['inputs'][0]] = co.get(c['inputs'][0])
@@ -484,7 +502,7 @@ class DAlgorithmApp:
 
         curr_node = f_node
         while True:
-            next_gates =[g for g in self.components.values() if curr_node in g['inputs'] and self.algo_state[g['id']] == 'x']
+            next_gates = [g for g in self.components.values() if curr_node in g['inputs'] and self.algo_state[g['id']] == 'x']
             if not next_gates: break
             
             opts = [{'label': f"Przez {g['id']}", 'data': g} for g in next_gates]
@@ -501,7 +519,7 @@ class DAlgorithmApp:
             other_inp = n_gate['inputs'][1 if port_idx==0 else 0]
             o_state = self.algo_state[other_inp] if other_inp else 'x'
             
-            valid_sens =[]
+            valid_sens = []
             for v in ['0', '1']:
                 if o_state != 'x' and o_state != v: continue
                 out0 = self.eval_gate(n_gate['type'], '0' if port_idx==0 else v, '0' if port_idx==1 else v)
@@ -541,7 +559,7 @@ class DAlgorithmApp:
                     
                     if s0 == 'x' or (s1 == 'x' and g['type'] not in ['NOT', 'NODE']):
                         j_cb =[]
-                        for v0 in ['0', '1']:
+                        for v0 in['0', '1']:
                             for v1 in ['0', '1']:
                                 if (s0=='x' or s0==v0) and (s1=='x' or s1==v1):
                                     if self.eval_gate(g['type'], v0, v1) == val:
@@ -587,7 +605,7 @@ class DAlgorithmApp:
         self.tree.column("Komentarz", width=350, anchor="w")
         
         for i, step in enumerate(self.steps):
-            vals = [i+1] + [step['s'][c] for c in self.cols] + [step['msg']]
+            vals =[i+1] + [step['s'][c] for c in self.cols] + [step['msg']]
             self.tree.insert("", tk.END, values=vals)
 
         for widget in self.decisions_inner.winfo_children(): widget.destroy()

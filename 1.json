@@ -1,0 +1,157 @@
+{
+    "components": {
+        "X5": {
+            "id": "X5",
+            "type": "IN",
+            "x": 60,
+            "y": 121,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X6": {
+            "id": "X6",
+            "type": "IN",
+            "x": 64,
+            "y": 183,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X7": {
+            "id": "X7",
+            "type": "IN",
+            "x": 67,
+            "y": 268,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X8": {
+            "id": "X8",
+            "type": "IN",
+            "x": 68,
+            "y": 346,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X9": {
+            "id": "X9",
+            "type": "IN",
+            "x": 66,
+            "y": 418,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X10": {
+            "id": "X10",
+            "type": "IN",
+            "x": 65,
+            "y": 481,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X11": {
+            "id": "X11",
+            "type": "IN",
+            "x": 70,
+            "y": 559,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X12": {
+            "id": "X12",
+            "type": "IN",
+            "x": 64,
+            "y": 638,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "G1": {
+            "id": "G1",
+            "type": "NAND",
+            "x": 243,
+            "y": 327,
+            "inputs": [
+                "X7",
+                "X8"
+            ]
+        },
+        "G0": {
+            "id": "G0",
+            "type": "NAND",
+            "x": 240,
+            "y": 148,
+            "inputs": [
+                "X5",
+                "X6"
+            ]
+        },
+        "G2": {
+            "id": "G2",
+            "type": "NAND",
+            "x": 242,
+            "y": 451,
+            "inputs": [
+                "X9",
+                "X10"
+            ]
+        },
+        "G3": {
+            "id": "G3",
+            "type": "NAND",
+            "x": 227,
+            "y": 601,
+            "inputs": [
+                "X11",
+                "X12"
+            ]
+        },
+        "G4": {
+            "id": "G4",
+            "type": "NOR",
+            "x": 427,
+            "y": 231,
+            "inputs": [
+                "G0",
+                "G1"
+            ]
+        },
+        "G13": {
+            "id": "G13",
+            "type": "NOR",
+            "x": 434,
+            "y": 526,
+            "inputs": [
+                "G2",
+                "G3"
+            ]
+        },
+        "G14": {
+            "id": "G14",
+            "type": "XNOR",
+            "x": 586,
+            "y": 376,
+            "inputs": [
+                "G4",
+                "G13"
+            ]
+        }
+    },
+    "counter": 22,
+    "target": "G0",
+    "fault_type": "sa1"
+}
