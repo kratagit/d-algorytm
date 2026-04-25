@@ -1,0 +1,147 @@
+{
+    "components": {
+        "X8": {
+            "id": "X8",
+            "type": "IN",
+            "x": 27,
+            "y": 49,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X9": {
+            "id": "X9",
+            "type": "IN",
+            "x": 103,
+            "y": 134,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X10": {
+            "id": "X10",
+            "type": "IN",
+            "x": 214,
+            "y": 132,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X11": {
+            "id": "X11",
+            "type": "IN",
+            "x": 319,
+            "y": 133,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X12": {
+            "id": "X12",
+            "type": "IN",
+            "x": 427,
+            "y": 134,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X13": {
+            "id": "X13",
+            "type": "IN",
+            "x": 540,
+            "y": 130,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X14": {
+            "id": "X14",
+            "type": "IN",
+            "x": 645,
+            "y": 130,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "G0": {
+            "id": "G0",
+            "type": "NOT",
+            "x": 115,
+            "y": 47,
+            "inputs": [
+                "X8",
+                null
+            ]
+        },
+        "G1": {
+            "id": "G1",
+            "type": "AND",
+            "x": 222,
+            "y": 56,
+            "inputs": [
+                "G0",
+                "X9"
+            ]
+        },
+        "G2": {
+            "id": "G2",
+            "type": "NAND",
+            "x": 324,
+            "y": 56,
+            "inputs": [
+                "G1",
+                "X10"
+            ]
+        },
+        "G3": {
+            "id": "G3",
+            "type": "OR",
+            "x": 424,
+            "y": 58,
+            "inputs": [
+                "G2",
+                "X11"
+            ]
+        },
+        "G4": {
+            "id": "G4",
+            "type": "NOR",
+            "x": 526,
+            "y": 56,
+            "inputs": [
+                "G3",
+                "X12"
+            ]
+        },
+        "G5": {
+            "id": "G5",
+            "type": "XOR",
+            "x": 641,
+            "y": 58,
+            "inputs": [
+                "G4",
+                "X13"
+            ]
+        },
+        "G6": {
+            "id": "G6",
+            "type": "XNOR",
+            "x": 764,
+            "y": 59,
+            "inputs": [
+                "G5",
+                "X14"
+            ]
+        }
+    },
+    "counter": 21,
+    "target": "G3",
+    "fault_type": "sa1"
+}
