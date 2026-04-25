@@ -5,7 +5,7 @@ import json
 class DAlgorithmApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Inteligentny Symulator D-Algorytmu PRO (Węzły + Don't Care 'x')")
+        self.root.title("Inteligentny Symulator D-Algorytmu PRO (Obłe bramki + Kable)")
         self.root.geometry("1200x800")
         
         self.components = {}
@@ -19,7 +19,7 @@ class DAlgorithmApp:
         self.user_choices = {}
         self.decision_log =[]
         self.algo_state = {}
-        self.steps =[]
+        self.steps = []
         self.cols =[]
 
         self.setup_ui()
@@ -79,6 +79,7 @@ class DAlgorithmApp:
         
         self.canvas.bind("<Button-1>", self.on_canvas_click)
         self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
+        self.canvas.bind("<Motion>", self.on_mouse_move)
         self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)
         self.canvas.bind("<Button-3>", self.on_canvas_right_click)
 
@@ -176,9 +177,9 @@ class DAlgorithmApp:
         self.counter = 7
         
         comps =[
-            ('IN', 50, 50, 'X8'), ('IN', 160, 100, 'X9'), ('IN', 280, 150, 'X10'), ('IN', 420, 200, 'X11'),
-            ('IN', 50, 350, 'X12'), ('IN', 180, 400, 'X13'), ('IN', 320, 400, 'X14'),
-            ('NOT', 120, 50, 'G0'), ('AND', 240, 75, 'G1'), ('NAND', 360, 100, 'G2'), ('OR', 500, 125, 'G3'),
+            ('IN', 40, 50, 'X8'), ('IN', 150, 100, 'X9'), ('IN', 280, 150, 'X10'), ('IN', 420, 200, 'X11'),
+            ('IN', 40, 350, 'X12'), ('IN', 180, 400, 'X13'), ('IN', 330, 400, 'X14'),
+            ('NOT', 120, 50, 'G0'), ('AND', 230, 75, 'G1'), ('NAND', 360, 100, 'G2'), ('OR', 500, 125, 'G3'),
             ('NOR', 150, 330, 'G4'), ('XOR', 300, 350, 'G5'), ('XNOR', 460, 350, 'G6')
         ]
         for c in comps: self.add_comp(c[0], c[1], c[2], c[3])
@@ -235,16 +236,21 @@ class DAlgorithmApp:
         self.clear_results()
         self.redraw()
 
-    def redraw(self):
+    # --- RYSOWANIE IKON Z OBŁYMI BRAMKAMI ---
+
+    def redraw(self, mx=None, my=None):
         self.canvas.delete("all")
-        self.draw_wires()
+        self.draw_wires(mx, my)
         self.draw_components()
 
     def draw_components(self):
         self.hitboxes =[]
         for cid, c in self.components.items():
             x, y = c['x'], c['y']
-            w, h = 60, 40
+            
+            # SZEROKOŚĆ 70 dla bramek (aby kółka się nie zlewały) i 60 dla wejść
+            w = 60 if c['type'] == 'IN' else 70 
+            h = 40
             color = "#3498db" if self.dragging == cid else "#2c3e50"
             
             self.canvas.create_rectangle(x, y-15, x+w, y+h, fill="", outline="")
@@ -275,17 +281,18 @@ class DAlgorithmApp:
                 
             sx, sy = x + 10, y
             gtype = c['type']
+            
             self.canvas.create_text(x+w/2, y-8, text=cid, font=("Arial", 10, "bold"), fill="#2c3e50")
             
-            if gtype == 'NOT': self.canvas.create_line(x, sy+20, sx, sy+20, fill=color, width=2)
+            # Wtyki wejściowe
+            if gtype == 'NOT': 
+                self.canvas.create_line(x, sy+20, sx, sy+20, fill=color, width=2)
             else:
                 self.canvas.create_line(x, sy+10, sx+8, sy+10, fill=color, width=2)
                 self.canvas.create_line(x, sy+30, sx+8, sy+30, fill=color, width=2)
                 
+            # Wtyk wyjściowy (aby sięgał aż do końca w=70)
             out_start = sx + 40
-            if gtype in['NAND', 'NOR', 'XNOR']: out_start = sx + 48
-            elif gtype == 'NOT': out_start = sx + 38
-            self.canvas.create_line(out_start, sy+20, x+60, sy+20, fill=color, width=2)
             
             if gtype in ['AND', 'NAND']:
                 self.canvas.create_rectangle(sx, sy, sx+20, sy+40, fill="white", outline="")
@@ -294,17 +301,33 @@ class DAlgorithmApp:
                 self.canvas.create_line(sx, sy+40, sx+20, sy+40, fill=color, width=2)
                 self.canvas.create_line(sx, sy, sx, sy+40, fill=color, width=2)
                 self.canvas.create_arc(sx, sy, sx+40, sy+40, start=-90, extent=180, style=tk.ARC, outline=color, width=2)
+                if gtype == 'NAND':
+                    self.canvas.create_oval(sx+40, sy+16, sx+48, sy+24, fill="white", outline=color, width=2)
+                    out_start = sx + 48
+                    
             elif gtype in['OR', 'NOR', 'XOR', 'XNOR']:
-                pts =[sx, sy, sx, sy, sx+20, sy, sx+40, sy+20, sx+40, sy+20, sx+20, sy+40, sx, sy+40, sx, sy+40, sx+10, sy+20, sx+10, sy+20]
+                # OBŁA BRAMKA: używamy spline który tworzy zaokrąglenie w punkcie sx+42
+                pts =[sx, sy, sx, sy, sx+25, sy, sx+42, sy+20, sx+25, sy+40, sx, sy+40, sx, sy+40, sx+10, sy+20, sx+10, sy+20]
                 self.canvas.create_polygon(pts, smooth=True, fill="white", outline=color, width=2)
-                if gtype in['XOR', 'XNOR']:
-                    xpts =[sx-6, sy, sx-6, sy, sx+4, sy+20, sx+4, sy+20, sx-6, sy+40, sx-6, sy+40]
+                
+                if gtype in ['XOR', 'XNOR']:
+                    xpts =[sx-6, sy, sx-6, sy, sx+4, sy+20, sx-6, sy+40, sx-6, sy+40]
                     self.canvas.create_line(xpts, smooth=True, fill=color, width=2)
+                    
+                if gtype in ['NOR', 'XNOR']:
+                    # Spline cofa czubek, więc kółko opieramy na sx+38
+                    self.canvas.create_oval(sx+38, sy+16, sx+46, sy+24, fill="white", outline=color, width=2)
+                    out_start = sx + 46
+                else:
+                    out_start = sx + 38 # Zwykły OR / XOR bez kółka
+            
             elif gtype == 'NOT':
                 self.canvas.create_polygon(sx, sy+5, sx+30, sy+20, sx, sy+35, fill="white", outline=color, width=2)
+                self.canvas.create_oval(sx+30, sy+16, sx+38, sy+24, fill="white", outline=color, width=2)
+                out_start = sx + 38
                 
-            if gtype in['NAND', 'NOR', 'XNOR']: self.canvas.create_oval(sx+40, sy+16, sx+48, sy+24, fill="white", outline=color, width=2)
-            elif gtype == 'NOT': self.canvas.create_oval(sx+30, sy+16, sx+38, sy+24, fill="white", outline=color, width=2)
+            # Rysuj linię wyjściową, by sięgała od bramki/kółka do czerwonej kropki!
+            self.canvas.create_line(out_start, sy+20, x+w, sy+20, fill=color, width=2)
                 
             ox, oy = x + w - 4, y + 16
             pc = "#f1c40f" if self.active_out == cid else "#e74c3c"
@@ -323,23 +346,43 @@ class DAlgorithmApp:
                 self.hitboxes.append({'type': 'port_in', 'id': cid, 'idx': 0, 'x': ix, 'y': iy1, 'w': 8, 'h': 8})
                 self.hitboxes.append({'type': 'port_in', 'id': cid, 'idx': 1, 'x': ix, 'y': iy2, 'w': 8, 'h': 8})
 
-    def draw_wires(self):
+    def draw_wires(self, mx=None, my=None):
         for cid, c in self.components.items():
             for idx, src_id in enumerate(c['inputs']):
                 if src_id and src_id in self.components:
-                    src = self.components[src_id]
-                    x1 = src['x'] + (12 if src['type'] == 'NODE' else 60)
-                    y1 = src['y'] + (6 if src['type'] == 'NODE' else 20)
-                    x2 = c['x']
-                    if c['type'] == 'NODE': y2 = c['y'] + 6
-                    elif c['type'] == 'NOT': y2 = c['y'] + 20
-                    else: y2 = c['y'] + (10 if idx == 0 else 30)
-                    self.canvas.create_line(x1, y1, x1+40, y1, x2-40, y2, x2, y2, smooth=True, fill="#34495e", width=2)
+                    self.draw_bezier(src_id, cid, idx)
+                    
+        # Rysowanie "latającego" kabla
+        if self.active_out and mx is not None and my is not None:
+            src = self.components[self.active_out]
+            sw = 60 if src['type'] == 'IN' else (12 if src['type'] == 'NODE' else 70)
+            x1 = src['x'] + sw
+            y1 = src['y'] + (6 if src['type'] == 'NODE' else 20)
+            self.canvas.create_line(x1, y1, x1+40, y1, mx-40, my, mx, my, smooth=True, fill="#e74c3c", width=2, dash=(5,3))
+
+    def draw_bezier(self, src_id, dst_id, idx):
+        src = self.components[src_id]
+        dst = self.components[dst_id]
+        
+        sw = 60 if src['type'] == 'IN' else (12 if src['type'] == 'NODE' else 70)
+        x1 = src['x'] + sw
+        y1 = src['y'] + (6 if src['type'] == 'NODE' else 20)
+        
+        x2 = dst['x']
+        if dst['type'] == 'NODE': y2 = dst['y'] + 6
+        elif dst['type'] == 'NOT': y2 = dst['y'] + 20
+        else: y2 = dst['y'] + (10 if idx == 0 else 30)
+        
+        self.canvas.create_line(x1, y1, x1+40, y1, x2-40, y2, x2, y2, smooth=True, fill="#34495e", width=2)
 
     def get_hitbox(self, x, y):
         for hb in reversed(self.hitboxes):
             if hb['x'] <= x <= hb['x']+hb['w'] and hb['y'] <= y <= hb['y']+hb['h']: return hb
         return None
+
+    def on_mouse_move(self, event):
+        if self.active_out:
+            self.redraw(event.x, event.y)
 
     def on_canvas_click(self, event):
         hb = self.get_hitbox(event.x, event.y)
@@ -404,7 +447,7 @@ class DAlgorithmApp:
 
     def assign_state(self, k, v, delta):
         if self.algo_state.get(k) == v: return False
-        if self.algo_state.get(k) not in ['x', None] and v not in ['x', None]: return True
+        if self.algo_state.get(k) not in['x', None] and v not in ['x', None]: return True
         self.algo_state[k] = v
         if delta is not None: delta[k] = v
         conflict = False
@@ -466,7 +509,7 @@ class DAlgorithmApp:
         valid_cands =[]
         for cand in cands:
             conflict = False; needed = {}
-            for pin in [0, 1]:
+            for pin in[0, 1]:
                 if pin in cand:
                     inp = c['inputs'][pin]
                     if not inp:
@@ -487,7 +530,7 @@ class DAlgorithmApp:
             self.update_ui()
             return
             
-        opts =[{'label': ", ".join(f"{k}={v}" for k,v in cb.items()) or "Brak wymagań", 'data': cb} for cb in valid_cands]
+        opts =[{'label': ", ".join(f"{self.resolve_name(k)}={v}" for k,v in cb.items() if v!='x') or "Brak wymagań", 'data': cb} for cb in valid_cands]
         idx = self.make_decision(f'excite_{f_node}', f"Pobudzenie {f_node} na {req_h}", opts)
         chosen = opts[idx]['data']
         
@@ -533,7 +576,7 @@ class DAlgorithmApp:
             other_inp = n_gate['inputs'][1 if port_idx==0 else 0]
             o_state = self.algo_state[other_inp] if other_inp else 'x'
             
-            valid_sens = []
+            valid_sens =[]
             for v in ['0', '1']:
                 if o_state != 'x' and o_state != v: continue
                 if not other_inp and v != 'x': continue 
@@ -611,7 +654,7 @@ class DAlgorithmApp:
                         self.add_step(f"SPRZECZNOŚĆ przy wyliczaniu {cid}={val}", full=False)
                         break
                         
-                    opts =[{'label': ", ".join(f"{k}={v}" for k,v in cb.items()) or "Gotowe", 'data': cb} for cb in valid_cands]
+                    opts =[{'label': ", ".join(f"{self.resolve_name(k)}={v}" for k,v in cb.items() if v!='x') or "Gotowe", 'data': cb} for cb in valid_cands]
                     j_idx = self.make_decision(f'just_{cid}', f"Zgodność na {cid}={val}", opts)
                     chosen = opts[j_idx]['data']
                     
@@ -641,16 +684,19 @@ class DAlgorithmApp:
         self.tree.column("Krok", width=40, anchor="center")
         
         for c in display_cols:
-            self.tree.heading(c, text=c)
+            self.tree.heading(c, text=self.resolve_name(c))
             self.tree.column(c, width=45, anchor="center")
             
         self.tree.heading("Komentarz", text="Komentarz")
         self.tree.column("Komentarz", width=400, anchor="w")
         
         for i, step in enumerate(self.steps):
-            vals =[i+1]
+            vals = [i+1]
             for c in display_cols:
-                v = step['s'][c] if step['full'] else step['delta'].get(c, '')
+                if step['full']:
+                    v = step['s'][c]
+                else:
+                    v = step['delta'].get(c, '')
                 vals.append(v)
             vals.append(step['msg'])
             self.tree.insert("", tk.END, values=vals)
