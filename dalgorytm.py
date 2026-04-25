@@ -5,7 +5,7 @@ import json
 class DAlgorithmApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Inteligentny Symulator D-Algorytmu PRO (Prawdziwe Ikony)")
+        self.root.title("Inteligentny Symulator D-Algorytmu PRO (Czysta Tabela + Don't Care)")
         self.root.geometry("1200x800")
         
         # Stan aplikacji
@@ -19,7 +19,7 @@ class DAlgorithmApp:
         
         # Stan algorytmu
         self.user_choices = {}
-        self.decision_log =[]
+        self.decision_log = []
         self.algo_state = {}
         self.steps = []
         self.cols =[]
@@ -40,7 +40,6 @@ class DAlgorithmApp:
         self.right_frame = ttk.Frame(self.paned)
         self.paned.add(self.right_frame, weight=2)
         
-        # Menu Kontekstowe
         self.context_menu = tk.Menu(self.root, tearoff=0)
         self.context_menu.add_command(label="Edytuj (Zmień nazwę)", command=self.cmd_edit_comp)
         self.context_menu.add_separator()
@@ -55,7 +54,6 @@ class DAlgorithmApp:
         
         btn_style = {'width': 16, 'padding': 4}
         
-        # Sekcja DODAJ
         ttk.Label(toolbar, text="DODAJ ELEMENT", font=("Arial", 9, "bold"), foreground="#2c3e50").pack(pady=(5,2))
         ttk.Button(toolbar, text="+ Wejście (IN)", command=lambda: self.add_comp('IN'), **btn_style).pack(pady=1)
         ttk.Button(toolbar, text="+ Węzeł", command=lambda: self.add_comp('NODE'), **btn_style).pack(pady=1)
@@ -65,19 +63,17 @@ class DAlgorithmApp:
             
         ttk.Separator(toolbar, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=8)
         
-        # Sekcja PLIKI
         ttk.Label(toolbar, text="PLIKI", font=("Arial", 9, "bold"), foreground="#2c3e50").pack(pady=(0,2))
         ttk.Button(toolbar, text="Zapisz układ", command=self.save_workspace, **btn_style).pack(pady=1)
         ttk.Button(toolbar, text="Wczytaj układ", command=self.load_workspace, **btn_style).pack(pady=1)
         
         ttk.Separator(toolbar, orient=tk.HORIZONTAL).pack(fill=tk.X, pady=8)
         
-        # Sekcja ZARZĄDZANIE
         ttk.Label(toolbar, text="ZARZĄDZANIE", font=("Arial", 9, "bold"), foreground="#2c3e50").pack(pady=(0,2))
         ttk.Button(toolbar, text="Zbuduj Przykład", command=self.load_user_example, **btn_style).pack(pady=1)
         ttk.Button(toolbar, text="Wyczyść planszę", command=self.clear_workspace, **btn_style).pack(pady=1)
         
-        info = "ŁĄCZENIE:\n1. Kliknij czerwone\n2. Kliknij niebieskie\n(Ponowne klik. usuwa)\n\nZARZĄDZANIE:\nPrawy klik na bramkę\n(Menu: Edytuj/Usuń)"
+        info = "ŁĄCZENIE:\n1. Kliknij czerwone\n2. Kliknij niebieskie\n(Ponowne klik. usuwa)\n\nZARZĄDZANIE:\nPrawy klik na bramkę"
         ttk.Label(toolbar, text=info, foreground="gray", font=("Arial", 8)).pack(side=tk.BOTTOM, pady=10)
 
         self.canvas = tk.Canvas(self.left_frame, bg="#e8eaed", cursor="crosshair")
@@ -92,16 +88,19 @@ class DAlgorithmApp:
         top_frame = ttk.Frame(self.right_frame)
         top_frame.pack(fill=tk.X, padx=10, pady=10)
         
-        ttk.Label(top_frame, text="Cel błędu:").pack(side=tk.LEFT)
+        ttk.Label(top_frame, text="Cel:").pack(side=tk.LEFT)
         self.target_var = tk.StringVar()
-        self.target_cb = ttk.Combobox(top_frame, textvariable=self.target_var, width=10, state="readonly")
-        self.target_cb.pack(side=tk.LEFT, padx=5)
+        self.target_cb = ttk.Combobox(top_frame, textvariable=self.target_var, width=6, state="readonly")
+        self.target_cb.pack(side=tk.LEFT, padx=3)
         
         self.fault_type_var = tk.StringVar(value="sa1")
-        fault_cb = ttk.Combobox(top_frame, textvariable=self.fault_type_var, values=["sa0", "sa1"], width=5, state="readonly")
-        fault_cb.pack(side=tk.LEFT, padx=5)
+        fault_cb = ttk.Combobox(top_frame, textvariable=self.fault_type_var, values=["sa0", "sa1"], width=4, state="readonly")
+        fault_cb.pack(side=tk.LEFT, padx=3)
         
         ttk.Button(top_frame, text="Oblicz", command=lambda: self.run_algorithm(True)).pack(side=tk.RIGHT)
+        
+        self.show_nodes_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(top_frame, text="Pokaż węzły", variable=self.show_nodes_var, command=self.update_ui).pack(side=tk.RIGHT, padx=10)
 
         self.tree_frame = ttk.Frame(self.right_frame)
         self.tree_frame.pack(fill=tk.BOTH, expand=True, padx=10)
@@ -155,7 +154,7 @@ class DAlgorithmApp:
             prefix = 'X' if ctype == 'IN' else ('W' if ctype == 'NODE' else 'G')
             cid = f"{prefix}{self.counter}"
             
-        self.components[cid] = {'id': cid, 'type': ctype, 'x': x, 'y': y, 'inputs': [None, None]}
+        self.components[cid] = {'id': cid, 'type': ctype, 'x': x, 'y': y, 'inputs':[None, None]}
         self.update_target_cb()
         self.redraw()
 
@@ -185,7 +184,7 @@ class DAlgorithmApp:
         comps =[
             ('IN', 50, 50, 'X8'), ('IN', 160, 100, 'X9'), ('IN', 280, 150, 'X10'), ('IN', 420, 200, 'X11'),
             ('IN', 50, 350, 'X12'), ('IN', 180, 400, 'X13'), ('IN', 320, 400, 'X14'),
-            ('NOT', 120, 50, 'G0'), ('AND', 220, 75, 'G1'), ('NAND', 340, 100, 'G2'), ('OR', 480, 125, 'G3'),
+            ('NOT', 120, 50, 'G0'), ('AND', 240, 75, 'G1'), ('NAND', 360, 100, 'G2'), ('OR', 500, 125, 'G3'),
             ('NOR', 150, 330, 'G4'), ('XOR', 300, 350, 'G5'), ('XNOR', 460, 350, 'G6')
         ]
         for c in comps: self.add_comp(c[0], c[1], c[2], c[3])
@@ -261,7 +260,6 @@ class DAlgorithmApp:
             w, h = 60, 40
             color = "#3498db" if self.dragging == cid else "#2c3e50"
             
-            # Tło pod całą bramką dla łapania myszką
             self.canvas.create_rectangle(x, y-15, x+w, y+h, fill="", outline="")
             self.hitboxes.append({'type': 'comp', 'id': cid, 'x': x, 'y': y-15, 'w': w, 'h': h+15})
             
@@ -289,27 +287,22 @@ class DAlgorithmApp:
                 self.hitboxes.append({'type': 'port_out', 'id': cid, 'x': ox, 'y': oy, 'w': 8, 'h': 8})
                 continue
                 
-            # --- RYSOWANIE GEOMETRII BRAMEK ---
             sx, sy = x + 10, y
             gtype = c['type']
             
-            # Etykieta (Nazwa) nad bramką
             self.canvas.create_text(x+w/2, y-8, text=cid, font=("Arial", 10, "bold"), fill="#2c3e50")
             
-            # Linie wejściowe (wtyczki)
             if gtype == 'NOT':
                 self.canvas.create_line(x, sy+20, sx, sy+20, fill=color, width=2)
             else:
                 self.canvas.create_line(x, sy+10, sx+8, sy+10, fill=color, width=2)
                 self.canvas.create_line(x, sy+30, sx+8, sy+30, fill=color, width=2)
                 
-            # Linia wyjściowa (wtyczka)
             out_start = sx + 40
             if gtype in['NAND', 'NOR', 'XNOR']: out_start = sx + 48
             elif gtype == 'NOT': out_start = sx + 38
             self.canvas.create_line(out_start, sy+20, x+60, sy+20, fill=color, width=2)
             
-            # Ikona AND / NAND
             if gtype in ['AND', 'NAND']:
                 self.canvas.create_rectangle(sx, sy, sx+20, sy+40, fill="white", outline="")
                 self.canvas.create_arc(sx, sy, sx+40, sy+40, start=-90, extent=180, fill="white", outline="")
@@ -318,25 +311,21 @@ class DAlgorithmApp:
                 self.canvas.create_line(sx, sy, sx, sy+40, fill=color, width=2)
                 self.canvas.create_arc(sx, sy, sx+40, sy+40, start=-90, extent=180, style=tk.ARC, outline=color, width=2)
                 
-            # Ikona OR / NOR / XOR / XNOR
-            elif gtype in ['OR', 'NOR', 'XOR', 'XNOR']:
+            elif gtype in['OR', 'NOR', 'XOR', 'XNOR']:
                 pts =[sx, sy, sx, sy, sx+20, sy, sx+40, sy+20, sx+40, sy+20, sx+20, sy+40, sx, sy+40, sx, sy+40, sx+10, sy+20, sx+10, sy+20]
                 self.canvas.create_polygon(pts, smooth=True, fill="white", outline=color, width=2)
                 if gtype in ['XOR', 'XNOR']:
                     xpts =[sx-6, sy, sx-6, sy, sx+4, sy+20, sx+4, sy+20, sx-6, sy+40, sx-6, sy+40]
                     self.canvas.create_line(xpts, smooth=True, fill=color, width=2)
             
-            # Ikona NOT
             elif gtype == 'NOT':
                 self.canvas.create_polygon(sx, sy+5, sx+30, sy+20, sx, sy+35, fill="white", outline=color, width=2)
                 
-            # Kółko negacji na wyjściu
             if gtype in['NAND', 'NOR', 'XNOR']:
                 self.canvas.create_oval(sx+40, sy+16, sx+48, sy+24, fill="white", outline=color, width=2)
             elif gtype == 'NOT':
                 self.canvas.create_oval(sx+30, sy+16, sx+38, sy+24, fill="white", outline=color, width=2)
                 
-            # Porty na brzegach bounding-boxa (klikane niebieskie/czerwone)
             ox, oy = x + w - 4, y + 16
             pc = "#f1c40f" if self.active_out == cid else "#e74c3c"
             self.canvas.create_oval(ox, oy, ox+8, oy+8, fill=pc, outline="white")
@@ -374,7 +363,7 @@ class DAlgorithmApp:
         
         self.canvas.create_line(x1, y1, x1+40, y1, x2-40, y2, x2, y2, smooth=True, fill="#34495e", width=2)
 
-    # --- OBSŁUGA MYSZY ---
+    # --- OBSŁUGA ZDARZEŃ MYSZY ---
 
     def get_hitbox(self, x, y):
         for hb in reversed(self.hitboxes):
@@ -420,7 +409,8 @@ class DAlgorithmApp:
     def on_canvas_release(self, event):
         self.dragging = None
 
-    # --- LOGIKA D-ALGORYTMU ---
+
+    # --- LOGIKA INTELIGENTNEGO D-ALGORYTMU (Z 'x' I CZYSTĄ TABELĄ) ---
 
     def eval_gate(self, gtype, i1, i2):
         if gtype == 'IN' or gtype == 'NODE': return i1
@@ -442,14 +432,68 @@ class DAlgorithmApp:
         if gtype == 'XNOR': return '1' if (b1 == b2) else '0'
         return 'x'
 
+    def get_justifications(self, gtype, val):
+        """Zwraca kombinacje dla 'x' (Don't care)"""
+        if gtype == 'AND': return[{0:'1', 1:'1'}] if val == '1' else[{0:'0', 1:'x'}, {0:'x', 1:'0'}]
+        if gtype == 'NAND': return[{0:'1', 1:'1'}] if val == '0' else[{0:'0', 1:'x'}, {0:'x', 1:'0'}]
+        if gtype == 'OR': return[{0:'0', 1:'0'}] if val == '0' else[{0:'1', 1:'x'}, {0:'x', 1:'1'}]
+        if gtype == 'NOR': return[{0:'0', 1:'0'}] if val == '1' else[{0:'1', 1:'x'}, {0:'x', 1:'1'}]
+        if gtype == 'XOR': return[{0:'1', 1:'0'}, {0:'0', 1:'1'}] if val == '1' else[{0:'0', 1:'0'}, {0:'1', 1:'1'}]
+        if gtype == 'XNOR': return[{0:'0', 1:'0'}, {0:'1', 1:'1'}] if val == '1' else[{0:'1', 1:'0'}, {0:'0', 1:'1'}]
+        if gtype == 'NOT': return[{0: '0' if val=='1' else '1'}]
+        if gtype == 'NODE': return [{0: val}]
+        return []
+
+    def find_valid_justifications(self, g, val):
+        in0 = g['inputs'][0] if len(g['inputs']) > 0 else None
+        in1 = g['inputs'][1] if len(g['inputs']) > 1 else None
+        
+        s0 = self.algo_state[in0] if in0 else 'x'
+        s1 = self.algo_state[in1] if in1 else 'x'
+        
+        cands = self.get_justifications(g['type'], val)
+        valid =[]
+        for cand in cands:
+            conflict = False
+            needed = {}
+            
+            if 0 in cand:
+                if not in0: 
+                    if cand[0] != 'x': conflict = True
+                else:
+                    if cand[0] == 'x':
+                        if s0 == 'x': needed[in0] = 'x'
+                    else:
+                        if s0 != 'x' and s0 != cand[0]: conflict = True
+                        elif s0 == 'x': needed[in0] = cand[0]
+                        
+            if 1 in cand:
+                if not in1:
+                    if cand[1] != 'x': conflict = True
+                else:
+                    if cand[1] == 'x':
+                        if s1 == 'x': needed[in1] = 'x'
+                    else:
+                        if s1 != 'x' and s1 != cand[1]: conflict = True
+                        elif s1 == 'x': needed[in1] = cand[1]
+                        
+            if not conflict and needed not in valid:
+                valid.append(needed)
+        return valid
+
     def make_decision(self, dec_id, title, options):
         if len(options) <= 1: return 0
         selected = self.user_choices.get(dec_id, 0)
         self.decision_log.append({'id': dec_id, 'title': title, 'options': options, 'selected': selected})
         return selected
 
-    def add_step(self, msg):
-        self.steps.append({'s': self.algo_state.copy(), 'msg': msg})
+    def add_step(self, msg, delta=None, full=False):
+        self.steps.append({
+            's': self.algo_state.copy(),
+            'delta': delta if delta is not None else {},
+            'msg': msg,
+            'full': full
+        })
 
     def run_algorithm(self, is_fresh_run=False):
         if is_fresh_run: self.user_choices.clear()
@@ -469,63 +513,62 @@ class DAlgorithmApp:
         self.cols = sorted(self.components.keys(), key=sort_key)
         self.algo_state = {c: 'x' for c in self.cols}
         
-        self.add_step("Stan początkowy układu")
+        self.add_step("Stan początkowy układu", full=True)
         
+        # 1. Pobudzenie
         req_h = '1' if f_type == 'sa0' else '0'
-        self.algo_state[f_node] = 'D' if f_type == 'sa0' else '~D'
+        fault_sym = 'D' if f_type == 'sa0' else '~D'
         
-        c = self.components[f_node]
-        combos = []
-        for v0 in['0', '1']:
-            for v1 in ['0', '1']:
-                if self.eval_gate(c['type'], v0, v1) == req_h:
-                    combos.append({c['inputs'][0]: v0, c['inputs'][1]: v1})
-                    
-        clean_combos =[]
-        for co in combos:
-            cl = {}
-            if c['inputs'][0]: cl[c['inputs'][0]] = co.get(c['inputs'][0])
-            if c['inputs'][1]: cl[c['inputs'][1]] = co.get(c['inputs'][1])
-            if cl not in clean_combos: clean_combos.append(cl)
+        valid_cands = self.find_valid_justifications(self.components[f_node], req_h)
 
-        if not clean_combos:
-            self.add_step(f"BŁĄD: Nie można wysterować {f_node} na {req_h}")
+        if not valid_cands:
+            self.add_step(f"BŁĄD: Nie można wysterować {f_node} na {req_h}", full=False)
             self.update_ui()
             return
             
-        opts =[{'label': ", ".join(f"{k}={v}" for k,v in cb.items()), 'data': cb} for cb in clean_combos]
+        opts =[{'label': ", ".join(f"{k}={v}" for k,v in cb.items()) or "Brak wymagań", 'data': cb} for cb in valid_cands]
         idx = self.make_decision(f'excite_{f_node}', f"Pobudzenie {f_node} na {req_h}", opts)
         chosen = opts[idx]['data']
         
-        for k, v in chosen.items(): self.algo_state[k] = v
-        self.add_step(f"Pobudzenie błędu {f_node}. Wymagane: {opts[idx]['label']}")
+        delta = chosen.copy()
+        delta[f_node] = fault_sym
+        
+        for k, v in chosen.items(): 
+            if v != 'x': self.algo_state[k] = v
+        self.algo_state[f_node] = fault_sym
+        
+        self.add_step(f"Pobudzenie błędu {f_node}. Wymagane: {opts[idx]['label']}", delta=delta, full=False)
 
+        # 2. Propagacja
         curr_node = f_node
         while True:
-            next_gates = [g for g in self.components.values() if curr_node in g['inputs'] and self.algo_state[g['id']] == 'x']
+            next_gates =[g for g in self.components.values() if curr_node in g['inputs'] and self.algo_state[g['id']] == 'x']
             if not next_gates: break
             
-            opts = [{'label': f"Przez {g['id']}", 'data': g} for g in next_gates]
+            opts =[{'label': f"Przez {g['id']}", 'data': g} for g in next_gates]
             n_idx = self.make_decision(f'branch_{curr_node}', f"Rozgałęzienie z {curr_node}. Wybierz drogę:", opts)
             n_gate = opts[n_idx]['data']
             
             if n_gate['type'] in['NOT', 'NODE']:
-                self.algo_state[n_gate['id']] = ('~D' if self.algo_state[curr_node]=='D' else 'D') if n_gate['type']=='NOT' else self.algo_state[curr_node]
+                new_sym = ('~D' if self.algo_state[curr_node]=='D' else 'D') if n_gate['type']=='NOT' else self.algo_state[curr_node]
+                self.algo_state[n_gate['id']] = new_sym
                 curr_node = n_gate['id']
-                self.add_step(f"Propagacja przez {n_gate['id']}.")
+                self.add_step(f"Propagacja przez {n_gate['id']}. Znak zaktualizowany.", delta={n_gate['id']: new_sym}, full=False)
                 continue
                 
             port_idx = n_gate['inputs'].index(curr_node)
             other_inp = n_gate['inputs'][1 if port_idx==0 else 0]
             o_state = self.algo_state[other_inp] if other_inp else 'x'
             
-            valid_sens = []
+            valid_sens =[]
             for v in ['0', '1']:
                 if o_state != 'x' and o_state != v: continue
+                if not other_inp and v != 'x': continue 
+                
                 out0 = self.eval_gate(n_gate['type'], '0' if port_idx==0 else v, '0' if port_idx==1 else v)
                 out1 = self.eval_gate(n_gate['type'], '1' if port_idx==0 else v, '1' if port_idx==1 else v)
                 
-                if out0 != out1:
+                if out0 != out1 and out0 != 'x' and out1 != 'x':
                     h_in = '1' if self.algo_state[curr_node]=='D' else '0'
                     f_in = '0' if self.algo_state[curr_node]=='D' else '1'
                     h_out = self.eval_gate(n_gate['type'], h_in if port_idx==0 else v, h_in if port_idx==1 else v)
@@ -533,18 +576,26 @@ class DAlgorithmApp:
                     valid_sens.append({'val': v, 'sym': 'D' if (h_out=='1' and f_out=='0') else '~D'})
                     
             if not valid_sens:
-                self.add_step(f"BŁĄD: Blokada na {n_gate['id']}")
+                self.add_step(f"BŁĄD: Blokada na {n_gate['id']}", full=False)
                 break
                 
-            opts =[{'label': f"{other_inp}={vs['val']} (wynik: {vs['sym']})", 'data': vs} for vs in valid_sens]
+            opts =[{'label': f"{other_inp}={vs['val']} (wypuści {vs['sym']})", 'data': vs} for vs in valid_sens]
             s_idx = self.make_decision(f'prop_{n_gate["id"]}', f"Uczulenie {n_gate['id']}", opts)
             chosen = opts[s_idx]['data']
             
-            if other_inp and self.algo_state[other_inp] == 'x': self.algo_state[other_inp] = chosen['val']
+            delta = {n_gate['id']: chosen['sym']}
+            if other_inp and chosen['val'] != 'x' and self.algo_state[other_inp] == 'x':
+                self.algo_state[other_inp] = chosen['val']
+                delta[other_inp] = chosen['val']
+                
             self.algo_state[n_gate['id']] = chosen['sym']
             curr_node = n_gate['id']
-            self.add_step(f"Propagacja przez {n_gate['id']}. Wymagane: {other_inp}={chosen['val']}")
+            req_msg = f"{other_inp}={chosen['val']}" if (other_inp and chosen['val']!='x') else "Brak"
+            self.add_step(f"Propagacja przez {n_gate['id']}. Wymagane: {req_msg}", delta=delta, full=False)
 
+        self.add_step("Stan po propagacji (Podsumowanie)", full=True)
+
+        # 3. Zgodność
         changed = True
         conflict = False
         while changed and not conflict:
@@ -557,55 +608,62 @@ class DAlgorithmApp:
                     s0 = self.algo_state[in0] if in0 else 'x'
                     s1 = self.algo_state[in1] if in1 else 'x'
                     
-                    if s0 == 'x' or (s1 == 'x' and g['type'] not in ['NOT', 'NODE']):
-                        j_cb =[]
-                        for v0 in['0', '1']:
-                            for v1 in ['0', '1']:
-                                if (s0=='x' or s0==v0) and (s1=='x' or s1==v1):
-                                    if self.eval_gate(g['type'], v0, v1) == val:
-                                        j_cb.append({in0: v0, in1: v1})
-                                        
-                        clean_jcb =[]
-                        for co in j_cb:
-                            cl = {}
-                            if in0 and s0=='x': cl[in0] = co[in0]
-                            if in1 and s1=='x': cl[in1] = co[in1]
-                            if cl and cl not in clean_jcb: clean_jcb.append(cl)
+                    if self.eval_gate(g['type'], s0, s1) == val:
+                        continue 
+                        
+                    valid_cands = self.find_valid_justifications(g, val)
+                    
+                    if not valid_cands:
+                        conflict = True
+                        self.add_step(f"SPRZECZNOŚĆ na {cid}", full=False)
+                        break
+                        
+                    opts =[{'label': ", ".join(f"{k}={v}" for k,v in cb.items()) or "Spełnione", 'data': cb} for cb in valid_cands]
+                    j_idx = self.make_decision(f'just_{cid}', f"Zgodność na {cid}={val}", opts)
+                    chosen = opts[j_idx]['data']
+                    
+                    has_real_change = False
+                    for k, v in chosen.items():
+                        if v != 'x' and self.algo_state[k] != v:
+                            self.algo_state[k] = v
+                            has_real_change = True
+                            changed = True
                             
-                        if not clean_jcb and (s0=='x' or s1=='x'):
-                            conflict = True
-                            self.add_step(f"SPRZECZNOŚĆ na {cid}")
-                            break
-                            
-                        if clean_jcb:
-                            opts =[{'label': ", ".join(f"{k}={v}" for k,v in cb.items()), 'data': cb} for cb in clean_jcb]
-                            j_idx = self.make_decision(f'just_{cid}', f"Zgodność na {cid}={val}", opts)
-                            chosen = opts[j_idx]['data']
-                            for k, v in chosen.items():
-                                self.algo_state[k] = v
-                                changed = True
-                            self.add_step(f"Zgodność na {cid}={val}. Wymagane: {opts[j_idx]['label']}")
+                    if chosen:
+                        self.add_step(f"Zgodność na {cid}={val}. Wymagane: {opts[j_idx]['label']}", delta=chosen, full=False)
 
         if not conflict:
-            self.add_step("ZNALEZIONO TEST")
+            self.add_step("TEST (Stan końcowy układu)", full=True)
             
         self.update_ui()
 
     def update_ui(self):
         self.tree.delete(*self.tree.get_children())
-        self.tree["columns"] = ["Krok"] + self.cols + ["Komentarz"]
+        
+        # Filtrowanie kolumn WĘZŁÓW
+        show_nodes = self.show_nodes_var.get()
+        display_cols =[c for c in self.cols if show_nodes or self.components.get(c, {}).get('type') != 'NODE']
+        
+        self.tree["columns"] =["Krok"] + display_cols + ["Komentarz"]
         self.tree.heading("Krok", text="Krok")
         self.tree.column("Krok", width=40, anchor="center")
         
-        for c in self.cols:
+        for c in display_cols:
             self.tree.heading(c, text=c)
             self.tree.column(c, width=45, anchor="center")
             
         self.tree.heading("Komentarz", text="Komentarz")
-        self.tree.column("Komentarz", width=350, anchor="w")
+        self.tree.column("Komentarz", width=400, anchor="w")
         
         for i, step in enumerate(self.steps):
-            vals =[i+1] + [step['s'][c] for c in self.cols] + [step['msg']]
+            vals = [i+1]
+            for c in display_cols:
+                if step['full']:
+                    v = step['s'][c]
+                else:
+                    v = step['delta'].get(c, '')
+                vals.append(v)
+            vals.append(step['msg'])
             self.tree.insert("", tk.END, values=vals)
 
         for widget in self.decisions_inner.winfo_children(): widget.destroy()

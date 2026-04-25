@@ -1,0 +1,147 @@
+{
+    "components": {
+        "X7": {
+            "id": "X7",
+            "type": "IN",
+            "x": 81,
+            "y": 233,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X8": {
+            "id": "X8",
+            "type": "IN",
+            "x": 75,
+            "y": 317,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X9": {
+            "id": "X9",
+            "type": "IN",
+            "x": 72,
+            "y": 448,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X10": {
+            "id": "X10",
+            "type": "IN",
+            "x": 75,
+            "y": 523,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "X11": {
+            "id": "X11",
+            "type": "IN",
+            "x": 76,
+            "y": 643,
+            "inputs": [
+                null,
+                null
+            ]
+        },
+        "G0": {
+            "id": "G0",
+            "type": "NOT",
+            "x": 224,
+            "y": 233,
+            "inputs": [
+                "X7",
+                null
+            ]
+        },
+        "G1": {
+            "id": "G1",
+            "type": "AND",
+            "x": 225,
+            "y": 382,
+            "inputs": [
+                "X8",
+                "X9"
+            ]
+        },
+        "G2": {
+            "id": "G2",
+            "type": "NAND",
+            "x": 232,
+            "y": 556,
+            "inputs": [
+                "X10",
+                "X11"
+            ]
+        },
+        "G3": {
+            "id": "G3",
+            "type": "OR",
+            "x": 563,
+            "y": 243,
+            "inputs": [
+                "G0",
+                "16"
+            ]
+        },
+        "G4": {
+            "id": "G4",
+            "type": "NOR",
+            "x": 550,
+            "y": 415,
+            "inputs": [
+                "16",
+                "17"
+            ]
+        },
+        "G5": {
+            "id": "G5",
+            "type": "XOR",
+            "x": 558,
+            "y": 549,
+            "inputs": [
+                "16",
+                "17"
+            ]
+        },
+        "G6": {
+            "id": "G6",
+            "type": "XNOR",
+            "x": 548,
+            "y": 702,
+            "inputs": [
+                "16",
+                "17"
+            ]
+        },
+        "16": {
+            "id": "16",
+            "type": "NODE",
+            "x": 376,
+            "y": 398,
+            "inputs": [
+                "G1",
+                null
+            ]
+        },
+        "17": {
+            "id": "17",
+            "type": "NODE",
+            "x": 367,
+            "y": 570,
+            "inputs": [
+                "G2",
+                null
+            ]
+        }
+    },
+    "counter": 20,
+    "target": "G2",
+    "fault_type": "sa0"
+}
