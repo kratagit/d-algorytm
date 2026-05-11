@@ -1,3 +1,8 @@
+dalgorytm.build
+dalgorytm.dist
+dalgorytm.onefile-build
+dalgorytm.bin
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
