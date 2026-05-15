@@ -2,6 +2,11 @@ dalgorytm.build
 dalgorytm.dist
 dalgorytm.onefile-build
 dalgorytm.bin
+dalgorytm.exe
+main.exe
+main.build/
+main.dist/
+main.onefile-build/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

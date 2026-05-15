@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>D-Algorytm PRO (Silnik Webowy)</title>
+    <script type="text/javascript" src="/eel.js"></script>
+    <style>
+        :root { --bg: #121212; --panel: #1e1e1e; --text: #e0e0e0; --accent: #3498db; --danger: #e74c3c; --success: #2ecc71; --purple: #9b59b6; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        #header { background: #1a1a1a; padding: 15px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #333; z-index: 10; }
+        #header h2 { margin: 0; font-size: 20px; color: var(--accent); }
+        
+        #main { display: flex; flex: 1; overflow: hidden; }
+        
+        #toolbar { width: 180px; background: var(--panel); padding: 15px; border-right: 1px solid #333; display: flex; flex-direction: column; gap: 8px; z-index: 5; overflow-y: auto;}
+        .btn { padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; background: #2c3e50; color: white; transition: 0.2s; text-align: center; font-size: 13px;}
+        .btn:hover { background: #34495e; }
+        .btn-primary { background: var(--accent); }
+        .btn-primary:hover { background: #2980b9; }
+        .btn-success { background: var(--success); font-size: 14px; padding: 12px; }
+        .btn-purple { background: var(--purple); }
+        .btn-purple:hover { background: #8e44ad; }
+        
+        #workspace { flex: 1; position: relative; background: #121212; background-image: radial-gradient(#333 1px, transparent 1px); background-size: 25px 25px; overflow: hidden; }
+        
+        #resizer { width: 6px; cursor: col-resize; background: #333; z-index: 10; transition: background 0.2s; }
+        #resizer:hover, #resizer.active { background: var(--accent); }
+        
+        #table-panel { width: 500px; background: var(--panel); display: flex; flex-direction: column; border-left: 1px solid #333; z-index: 5; }
+        #panel-header { padding: 15px; border-bottom: 1px solid #333; }
+        #results { flex: 1; overflow: auto; padding: 15px; }
+        
+        /* Komponenty na planszy */
+        .comp { position: absolute; cursor: grab; user-select: none; text-align: center; color: white; z-index: 2; min-width: 80px; min-height: 70px; display: flex; align-items: center; justify-content: center; }
+        .comp-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        
+        .comp.IN { background: #1a3642; border: 2px solid var(--accent); border-radius: 15px; padding: 5px 10px; min-height: 40px; }
+        .comp.NODE { min-width: 16px; width: 16px; height: 16px; min-height: 16px; padding:0; border-radius: 50%; background: #7f8c8d; color: transparent; border:none; }
+        .comp.NODE .lbl { position: absolute; top: -22px; left: -5px; color: #aaa; font-size: 13px; }
+        .comp-inner { position: relative; z-index: 10; font-size: 14px; }
+        .name-lbl { outline: none; cursor: default; border-bottom: 1px dashed transparent; display: inline-block; min-width: 20px;}
+        
+        /* Menu Kontekstowe */
+        #context-menu { position: absolute; display: none; background: #2b2b2b; border: 1px solid #444; border-radius: 4px; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .ctx-item { padding: 8px 15px; font-size: 13px; cursor: pointer; color: #e0e0e0; transition: background 0.1s; }
+        .ctx-item:hover { background: #34495e; }
+        .ctx-item.danger:hover { background: var(--danger); }
+        .name-lbl:focus { border-bottom: 1px solid var(--accent); }
+        
+        /* Wtyczki */
+        .port { position: absolute; width: 12px; height: 12px; border-radius: 50%; cursor: crosshair; z-index: 5; transition: 0.1s; }
+        .port:hover { transform: scale(1.4); }
+        .port.out { background: var(--danger); right: -6px; top: calc(50% - 6px); border: 2px solid #1e1e1e;}
+        .port.out.active { background: #f1c40f; box-shadow: 0 0 8px #f1c40f; border-color:#f39c12; }
+        .port.in { background: var(--accent); left: -6px; border: 2px solid #1e1e1e;}
+        .port.in1 { top: 20%; }
+        .port.in2 { top: calc(80% - 12px); }
+        .port.in-center { top: calc(50% - 6px); }
+
+        /* SVG & Routing */
+        svg { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 1; overflow: visible; }
+        path.wire { fill: none; stroke: #34495e; stroke-width: 3; stroke-linecap: round; pointer-events: none; }
+        path.wire-hitbox { fill: none; stroke: transparent; stroke-width: 15; stroke-linecap: round; pointer-events: stroke; cursor: pointer; }
+        path.wire-hitbox:hover + path.wire { stroke: #5dade2; }
+        
+        circle.waypoint { fill: #f1c40f; stroke: #1e1e1e; stroke-width: 2; pointer-events: all; cursor: grab; opacity: 0; transition: opacity 0.2s, transform 0.2s; transform-origin: center; transform-box: fill-box; }
+        .connection:hover circle.waypoint { opacity: 1; }
+        circle.waypoint:hover { transform: scale(1.4); opacity: 1; }
+        
+        path.flying { stroke: var(--danger); stroke-dasharray: 5,5; pointer-events: none; fill: none; stroke-width: 3; }
+        circle.flying-wp { opacity: 1; fill: var(--danger); pointer-events: none; }
+
+        /* Tabela */
+        table { width: 100%; border-collapse: collapse; font-size: 13px; background: #2b2b2b; color: white; white-space: nowrap;}
+        th, td { border: 1px solid #444; padding: 6px 10px; text-align: center; }
+        th { background: #1a1a1a; color: var(--accent); position: sticky; top: 0; }
+        tr:nth-child(even) { background: #222; }
+        .d-bar { text-decoration: overline; color: #ff7675; font-weight: bold;}
+        .d-norm { color: #74b9ff; font-weight: bold;}
+        
+        /* Alternatywy */
+        .decision-row { background: #2c3e50; padding: 10px; margin-bottom: 10px; border-radius: 6px; }
+        select { width: 100%; padding: 5px; margin-top: 5px; background: #1a1a1a; color: white; border: 1px solid #555; border-radius: 4px;}
+        
+        .toolbar-title { font-size: 11px; font-weight: bold; color: var(--accent); margin: 10px 0 5px 0; }
+        hr { border-color:#333; width:100%; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <h2>D-Algorytm PRO (Silnik Webowy)</h2>
+    <div style="display:flex; gap:10px;">
+        <button class="btn btn-primary" onclick="loadExample()">Zbuduj Schemat Przykładu</button>
+        <button class="btn" style="background:var(--danger)" onclick="clearAll()">Wyczyść Planszę</button>
+    </div>
+</div>
+
+<div id="main">
+    <div id="toolbar">
+        <div class="toolbar-title">ZAPIS I ODCZYT</div>
+        <div class="btn btn-purple" onclick="saveWorkspace()">Zapisz układ</div>
+        <div class="btn btn-purple" onclick="document.getElementById('file-input').click()">Wczytaj układ</div>
+        <!-- Niewidzialny input do obsługi plików w przeglądarce -->
+        <input type="file" id="file-input" style="display:none" accept=".json">
+        
+        <hr>
+        
+        <div class="toolbar-title">DODAJ ELEMENT</div>
+        <div class="btn" onclick="add('IN')" style="background:#1a3642; border: 1px solid var(--accent);">+ Wejście (IN)</div>
+        <div class="btn" onclick="add('NODE')">+ Węzeł (Kropka)</div>
+        
+        <hr>
+        
+        <div class="btn" onclick="add('AND')">Bramka AND</div>
+        <div class="btn" onclick="add('OR')">Bramka OR</div>
+        <div class="btn" onclick="add('NAND')">Bramka NAND</div>
+        <div class="btn" onclick="add('NOR')">Bramka NOR</div>
+        <div class="btn" onclick="add('XOR')">Bramka XOR</div>
+        <div class="btn" onclick="add('XNOR')">Bramka XNOR</div>
+        <div class="btn" onclick="add('NOT')">Bramka NOT</div>
+        
+        <div style="font-size: 11px; color:#aaa; margin-top:20px;">
+            <b>ŁĄCZENIE ELEMENTÓW:</b><br>
+            1. Kliknij czerwone, potem niebieskie wyjście.<br>
+            2. <b>Kliknij w tło</b>, by zagiąć kabel.<br>
+            3. <b>Podwójne kliknięcie</b> na kabel dodaje punkt.<br>
+            4. <b>Najedź myszką</b> na kabel, aby chwycić załamania.<br>
+            5. <b>Prawy Przycisk</b> na kabel go usuwa.<br>
+            6. <b>ESC</b> anuluje łączenie.
+        </div>
+    </div>
+
+    <div id="workspace">
+        <div id="canvas-container" style="position: absolute; top:0; left:0; width: 100%; height: 100%; transform-origin: 0 0;">
+            <svg id="svg-canvas"></svg>
+        </div>
+    </div>
+
+    <div id="resizer"></div>
+
+    <div id="table-panel">
+        <div id="panel-header">
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <select id="fault-target" style="flex:1; padding:8px; background:#1a1a1a; color:white; border:1px solid #555; border-radius:4px;"></select>
+                <select id="fault-type" style="width:70px; padding:8px; background:#1a1a1a; color:white; border:1px solid #555; border-radius:4px;">
+                    <option value="sa0">s-a-0</option>
+                    <option value="sa1" selected>s-a-1</option>
+                </select>
+                <button class="btn btn-success" onclick="runAlgo(true)">Oblicz Test</button>
+            </div>
+            <label style="font-size:13px; color:#aaa;"><input type="checkbox" id="show-nodes" onchange="renderTable()"> Pokaż węzły w tabeli</label>
+        </div>
+        <div id="results">
+            <p style="color: #666; text-align: center; margin-top: 50px;">Tabela wygeneruje się tutaj.</p>
+        </div>
+    </div>
+</div>
+
+<div id="context-menu">
+    <div class="ctx-item" onclick="ctxRename()">Zmień nazwę</div>
+    <div class="ctx-item danger" onclick="ctxDelete()">Usuń</div>
+</div>
+
+<script>
+    let comps = {};
+    let cId = 0;
+    let drag = null, ox=0, oy=0;
+    let actOut = null;
+    let flyingWaypoints = [];
+    let dragWp = null;
+    let userChoices = {};
+    let lastResult = null;
+    let ctxTarget = null;
+    
+    // Zmienne do obsługi zoom/pan
+    let scale = 1;
+    let panX = 0, panY = 0;
+    let isPanning = false;
+    let startClickX = 0, startClickY = 0;
+
+    const ws = document.getElementById('workspace');
+    const canvasContainer = document.getElementById('canvas-container');
+    const svg = document.getElementById('svg-canvas');
+
+    function applyTransform() {
+        canvasContainer.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        ws.style.backgroundPosition = `${panX}px ${panY}px`;
+        ws.style.backgroundSize = `${25 * scale}px ${25 * scale}px`;
+    }
+
+    ws.addEventListener('wheel', (e) => {
+        if(e.ctrlKey || true) { 
+            e.preventDefault();
+            const w = ws.getBoundingClientRect();
+            const mouseX = e.clientX - w.left;
+            const mouseY = e.clientY - w.top;
+
+            const wheel = e.deltaY < 0 ? 1 : -1;
+            const zoomAmount = 0.1;
+            const newScale = Math.min(Math.max(0.2, scale + wheel * zoomAmount), 5); 
+            
+            panX = mouseX - (mouseX - panX) * (newScale / scale);
+            panY = mouseY - (mouseY - panY) * (newScale / scale);
+            scale = newScale;
+            
+            applyTransform();
+        }
+    }, {passive: false});
+
+    ws.addEventListener('mousedown', (e) => {
+        if(e.button === 0 && (e.target === ws || e.target === canvasContainer || e.target === svg)) { 
+            e.preventDefault();
+            isPanning = true;
+            startClickX = e.clientX;
+            startClickY = e.clientY;
+            ws.style.cursor = 'grabbing';
+        }
+    });
+
+    // Przerwanie routingu prawym przyciskiem
+    ws.addEventListener('contextmenu', (e) => {
+        if (actOut) {
+            e.preventDefault();
+            actOut = null;
+            flyingWaypoints = [];
+            document.querySelectorAll('.port.out').forEach(p=>p.classList.remove('active'));
+            draw();
+        }
+    });
+
+    // Przerwanie routingu klawiszem ESCAPE
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && actOut) {
+            actOut = null;
+            flyingWaypoints = [];
+            document.querySelectorAll('.port.out').forEach(p=>p.classList.remove('active'));
+            draw();
+        }
+    });
+
+    // --- HTML5 RESIZER & DRAG ---
+    const resizer = document.getElementById('resizer');
+    const panel = document.getElementById('table-panel');
+    let isResizing = false;
+    resizer.onmousedown = () => { isResizing = true; resizer.classList.add('active'); ws.style.pointerEvents='none'; };
+    
+    window.onmousemove = (e) => {
+        if(isResizing) { panel.style.width = (window.innerWidth - e.clientX) + 'px'; return; }
+        
+        if(isPanning) {
+            panX = e.clientX - startClickX + panX;
+            panY = e.clientY - startClickY + panY;
+            startClickX = e.clientX;
+            startClickY = e.clientY;
+            applyTransform();
+            return;
+        }
+
+        // Przemieszczanie załamania kabla
+        if(dragWp) {
+            let w = canvasContainer.getBoundingClientRect();
+            let mx = (e.clientX - w.left - panX) / scale;
+            let my = (e.clientY - w.top - panY) / scale;
+            comps[dragWp.id].waypoints[dragWp.idx][dragWp.wpIdx] = {x: mx, y: my};
+            draw();
+            return;
+        }
+
+        // Przemieszczanie obiektu
+        if(drag) {
+            comps[drag].x = (e.clientX - ox - panX) / scale;
+            comps[drag].y = (e.clientY - oy - panY) / scale;
+            document.getElementById(drag).style.left = comps[drag].x + 'px';
+            document.getElementById(drag).style.top = comps[drag].y + 'px';
+            draw();
+        }
+        
+        if(actOut) {
+            let w = ws.getBoundingClientRect();
+            draw((e.clientX - w.left - panX) / scale, (e.clientY - w.top - panY) / scale);
+        }
+    };
+    
+    window.onmouseup = (e) => { 
+        isResizing = false; 
+        resizer.classList.remove('active'); 
+        drag = null; 
+        if(dragWp) { dragWp = null; ws.style.cursor = 'default'; }
+        ws.style.pointerEvents='auto'; 
+        if(isPanning) { isPanning = false; ws.style.cursor = 'default'; }
+    };
+
+    // --- ZAPIS I ODCZYT ---
+    function saveWorkspace() {
+        let tgt = document.getElementById('fault-target').value;
+        let typ = document.getElementById('fault-type').value;
+        let data = { components: comps, counter: cId, target: tgt, fault_type: typ };
+        
+        let blob = new Blob([JSON.stringify(data, null, 4)], {type: "application/json"});
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = "uklad_d_algorytm.json";
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('file-input').addEventListener('change', function(e) {
+        let file = e.target.files[0];
+        if(!file) return;
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let data = JSON.parse(e.target.result);
+                restoreComponents(data);
+            } catch(err) {
+                alert("Błąd odczytu pliku JSON: " + err);
+            }
+        };
+        reader.readAsText(file);
+        this.value = ''; 
+    });
+
+    function restoreComponents(data) {
+        clearAll();
+        cId = data.counter || 0;
+        let loadedComps = data.components || {};
+        
+        for(let id in loadedComps) {
+            let c = loadedComps[id];
+            comps[id] = { 
+                id: c.id, type: c.type, x: c.x, y: c.y, 
+                inputs: [...c.inputs],
+                waypoints: c.waypoints ? JSON.parse(JSON.stringify(c.waypoints)) : [[], []]
+            };
+            
+            let el = document.createElement('div');
+            el.className = `comp ${c.type}`;
+            el.id = id;
+            el.style.left = c.x + 'px'; el.style.top = c.y + 'px';
+            
+            let ports = `<div class="port out" onclick="cOut(event, '${id}')"></div>`;
+            if(c.type === 'NODE') {
+                el.innerHTML = `<div class="lbl">${id}</div><div class="port in in-center" onclick="cIn(event, '${id}', 0)"></div>` + ports;
+            } else {
+                let n = `<div class="comp-inner"><span class="name-lbl">${id}</span></div>`;
+                if(c.type === 'IN') el.innerHTML = n + ports;
+                else if(c.type === 'NOT') el.innerHTML = `<div class="comp-bg">${getGateSVG(c.type)}</div>` + n + `<div class="port in in-center" onclick="cIn(event, '${id}', 0)" oncontextmenu="rmW(event, '${id}', 0)"></div>` + ports;
+                else el.innerHTML = `<div class="comp-bg">${getGateSVG(c.type)}</div>` + n + `<div class="port in in1" onclick="cIn(event, '${id}', 0)" oncontextmenu="rmW(event, '${id}', 0)"></div><div class="port in in2" onclick="cIn(event, '${id}', 1)" oncontextmenu="rmW(event, '${id}', 1)"></div>` + ports;
+            }
+            
+            el.onmousedown = (e) => { 
+                if(e.button !== 0 || e.target.classList.contains('port')) return; 
+                drag=id; 
+                ox = e.clientX - ((comps[id].x * scale) + panX); 
+                oy = e.clientY - ((comps[id].y * scale) + panY); 
+            };
+            el.oncontextmenu = (e) => { showContextMenu(e, id); };
+            canvasContainer.appendChild(el);
+        }
+        
+        updateCB();
+        setTimeout(() => {
+            if(data.target) document.getElementById('fault-target').value = data.target;
+            if(data.fault_type) document.getElementById('fault-type').value = data.fault_type;
+            draw();
+        }, 50);
+    }
+
+    // --- BUDOWA UKŁADU ---
+    function getGateSVG(type) {
+        let sc = "#3498db";
+        let fc = "#2c3e50";
+        let html = `<svg width="100%" height="100%" viewBox="0 0 60 50">`;
+        html += `<path d="M 0 15 L 10 15 M 0 35 L 10 35 M 50 25 L 60 25" stroke="${sc}" stroke-width="2"/>`; // legs
+        if(type === 'AND') html += `<path d="M 10 5 L 30 5 A 20 20 0 0 1 30 45 L 10 45 Z" fill="${fc}" stroke="${sc}" stroke-width="2"/>`;
+        else if(type === 'NAND') html += `<path d="M 10 5 L 30 5 A 20 20 0 0 1 30 45 L 10 45 Z" fill="${fc}" stroke="${sc}" stroke-width="2"/><circle cx="53" cy="25" r="3" fill="#fff" stroke="${sc}" stroke-width="2"/>`;
+        else if(type === 'OR') html += `<path d="M 10 5 Q 35 5 50 25 Q 35 45 10 45 Q 20 25 10 5 Z" fill="${fc}" stroke="${sc}" stroke-width="2"/>`;
+        else if(type === 'NOR') html += `<path d="M 10 5 Q 35 5 47 25 Q 35 45 10 45 Q 20 25 10 5 Z" fill="${fc}" stroke="${sc}" stroke-width="2"/><circle cx="50" cy="25" r="3" fill="#fff" stroke="${sc}" stroke-width="2"/>`;
+        else if(type === 'XOR') html += `<path d="M 5 5 Q 15 25 5 45" fill="none" stroke="${sc}" stroke-width="2"/><path d="M 12 5 Q 37 5 50 25 Q 37 45 12 45 Q 22 25 12 5 Z" fill="${fc}" stroke="${sc}" stroke-width="2"/>`;
+        else if(type === 'XNOR') html += `<path d="M 5 5 Q 15 25 5 45" fill="none" stroke="${sc}" stroke-width="2"/><path d="M 12 5 Q 37 5 47 25 Q 37 45 12 45 Q 22 25 12 5 Z" fill="${fc}" stroke="${sc}" stroke-width="2"/><circle cx="50" cy="25" r="3" fill="#fff" stroke="${sc}" stroke-width="2"/>`;
+        else if(type === 'NOT') html = `<svg width="100%" height="100%" viewBox="0 0 60 50"><path d="M 0 25 L 15 25 M 46 25 L 60 25" stroke="${sc}" stroke-width="2"/><polygon points="15,5 45,25 15,45" fill="${fc}" stroke="${sc}" stroke-width="2"/><circle cx="48" cy="25" r="3" fill="#fff" stroke="${sc}" stroke-width="2"/>`;
+        html += `</svg>`;
+        return html;
+    }
+
+    function add(type, x=100, y=100, id=null) {
+        if(!id) id = (type==='IN'?'X':(type==='NODE'?'W':'G')) + (++cId);
+        comps[id] = { id, type, x, y, inputs:[null, null], waypoints:[[],[]] };
+        
+        let el = document.createElement('div');
+        el.className = `comp ${type}`;
+        el.id = id;
+        el.style.left = x+'px'; el.style.top = y+'px';
+        
+        let ports = `<div class="port out" onclick="cOut(event, '${id}')"></div>`;
+        if(type === 'NODE') {
+            el.innerHTML = `<div class="lbl">${id}</div><div class="port in in-center" onclick="cIn(event, '${id}', 0)"></div>` + ports;
+        } else {
+            let n = `<div class="comp-inner"><span class="name-lbl">${id}</span></div>`;
+            if(type === 'IN') el.innerHTML = n + ports;
+            else if(type === 'NOT') el.innerHTML = `<div class="comp-bg">${getGateSVG(type)}</div>` + n + `<div class="port in in-center" onclick="cIn(event, '${id}', 0)" oncontextmenu="rmW(event, '${id}', 0)"></div>` + ports;
+            else el.innerHTML = `<div class="comp-bg">${getGateSVG(type)}</div>` + n + `<div class="port in in1" onclick="cIn(event, '${id}', 0)" oncontextmenu="rmW(event, '${id}', 0)"></div><div class="port in in2" onclick="cIn(event, '${id}', 1)" oncontextmenu="rmW(event, '${id}', 1)"></div>` + ports;
+        }
+        
+        el.onmousedown = (e) => { 
+            if(e.button !== 0 || e.target.classList.contains('port')) return; 
+            drag=id; 
+            ox = e.clientX - ((comps[id].x * scale) + panX); 
+            oy = e.clientY - ((comps[id].y * scale) + panY); 
+        };
+        el.oncontextmenu = (e) => { showContextMenu(e, id); };
+        
+        canvasContainer.appendChild(el);
+        updateCB();
+        return id;
+    }
+
+    function rename(oldId, newId) {
+        newId = newId.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '');
+        if(!newId || newId === oldId) { document.getElementById(oldId).querySelector('.name-lbl').innerText = oldId; return; }
+        if(comps[newId]) { alert("Zajęta nazwa!"); document.getElementById(oldId).querySelector('.name-lbl').innerText = oldId; return; }
+        
+        comps[newId] = comps[oldId];
+        comps[newId].id = newId;
+        delete comps[oldId];
+        document.getElementById(oldId).id = newId;
+        for(let k in comps) comps[k].inputs = comps[k].inputs.map(i => i===oldId?newId:i);
+        updateCB(); draw();
+    }
+
+    function cOut(e, id) { 
+        e.stopPropagation(); 
+        document.querySelectorAll('.port.out').forEach(p=>p.classList.remove('active')); 
+        if(actOut===id) {
+            actOut=null; 
+            flyingWaypoints = [];
+        } else { 
+            actOut=id; 
+            flyingWaypoints = [];
+            e.target.classList.add('active'); 
+        } 
+        draw(); 
+    }
+    
+    function cIn(e, id, idx) { 
+        e.stopPropagation(); 
+        if(actOut) { 
+            if (comps[id].inputs[idx] === actOut) {
+                comps[id].inputs[idx] = null; 
+                comps[id].waypoints[idx] = [];
+            } else {
+                comps[id].inputs[idx] = actOut; 
+                comps[id].waypoints[idx] = [...flyingWaypoints];
+            }
+            actOut=null; 
+            flyingWaypoints = [];
+            document.querySelectorAll('.port.out').forEach(p=>p.classList.remove('active')); 
+            draw(); 
+        } 
+    }
+    
+    function rmW(e, id, idx) { 
+        e.stopPropagation(); e.preventDefault(); 
+        comps[id].inputs[idx]=null; 
+        comps[id].waypoints[idx]=[];
+        draw(); 
+    }
+
+    ws.onclick = (e) => { 
+        hideContextMenu();
+        let dist = Math.hypot(e.clientX - startClickX, e.clientY - startClickY);
+        if (dist > 5) return; // To było przeciągnięcie, nie kliknięcie
+        
+        if(actOut) { 
+            // Dodawanie waypointu do latającej linii
+            let w = canvasContainer.getBoundingClientRect();
+            let mx = (e.clientX - w.left - panX) / scale;
+            let my = (e.clientY - w.top - panY) / scale;
+            flyingWaypoints.push({x: mx, y: my});
+            draw(mx, my);
+        }
+    };
+
+    function showContextMenu(e, id) {
+        e.preventDefault();
+        e.stopPropagation();
+        ctxTarget = id;
+        const menu = document.getElementById('context-menu');
+        menu.style.display = 'block';
+        menu.style.left = e.clientX + 'px';
+        menu.style.top = e.clientY + 'px';
+    }
+
+    function hideContextMenu() {
+        document.getElementById('context-menu').style.display = 'none';
+        ctxTarget = null;
+    }
+
+    function ctxRename() {
+        if(!ctxTarget) return;
+        hideContextMenu();
+        let newId = prompt(`Podaj nową nazwę dla elementu ${ctxTarget}:`, ctxTarget);
+        if(newId !== null) rename(ctxTarget, newId);
+    }
+
+    function ctxDelete() {
+        if(!ctxTarget) return;
+        hideContextMenu();
+        if(confirm(`Usunąć ${ctxTarget}?`)) {
+            let id = ctxTarget;
+            delete comps[id]; 
+            for(let k in comps) comps[k].inputs = comps[k].inputs.map(i => i===id?null:i); 
+            document.getElementById(id).remove(); 
+            updateCB(); 
+            draw();
+        }
+    }
+
+    // --- MANIPULACJA KABLAMI I ZAŁAMANIAMI (WAYPOINTS) ---
+
+    function startDragWp(e, id, idx, wpIdx) {
+        e.stopPropagation();
+        e.preventDefault();
+        dragWp = {id, idx, wpIdx};
+        ws.style.cursor = 'grabbing';
+    }
+
+    function removeWp(e, id, idx, wpIdx) {
+        e.stopPropagation();
+        e.preventDefault();
+        comps[id].waypoints[idx].splice(wpIdx, 1);
+        draw();
+    }
+
+    function removeWire(e, id, idx) {
+        e.stopPropagation();
+        e.preventDefault();
+        if(confirm('Usunąć to połączenie?')) {
+            comps[id].inputs[idx] = null;
+            comps[id].waypoints[idx] = [];
+            draw();
+        }
+    }
+
+    function addWp(e, id, idx) {
+        e.stopPropagation();
+        e.preventDefault();
+        let w = canvasContainer.getBoundingClientRect();
+        let mx = (e.clientX - w.left - panX) / scale;
+        let my = (e.clientY - w.top - panY) / scale;
+        
+        let pts = [];
+        let src = comps[id].inputs[idx];
+        let se = document.getElementById(src).querySelector('.port.out').getBoundingClientRect();
+        let x1 = (se.left - w.left + 6)/scale, y1 = (se.top - w.top + 6)/scale;
+        
+        let de = document.getElementById(id).querySelectorAll('.port.in')[idx] || document.getElementById(id).querySelector('.port.in');
+        let deRect = de.getBoundingClientRect();
+        let x2 = (deRect.left - w.left + 6)/scale, y2 = (deRect.top - w.top + 6)/scale;
+        
+        pts.push({x: x1, y: y1});
+        if(comps[id].waypoints && comps[id].waypoints[idx]) {
+            pts.push(...comps[id].waypoints[idx]);
+        } else {
+            comps[id].waypoints = comps[id].waypoints || [[],[]];
+            comps[id].waypoints[idx] = [];
+        }
+        pts.push({x: x2, y: y2});
+        
+        // Znajdź najbliższy odcinek, by inteligentnie wstawić punkt
+        let bestIdx = 0;
+        let minDist = Infinity;
+        for(let i=0; i<pts.length-1; i++) {
+            let d = distToSegment({x:mx, y:my}, pts[i], pts[i+1]);
+            if(d < minDist) {
+                minDist = d;
+                bestIdx = i;
+            }
+        }
+        
+        comps[id].waypoints[idx].splice(bestIdx, 0, {x: mx, y: my});
+        draw();
+    }
+
+    function distToSegment(p, v, w) {
+        let l2 = (w.x - v.x)**2 + (w.y - v.y)**2;
+        if(l2 === 0) return Math.hypot(p.x - v.x, p.y - v.y);
+        let t = ((p.x - v.x)*(w.x - v.x) + (p.y - v.y)*(w.y - v.y)) / l2;
+        t = Math.max(0, Math.min(1, t));
+        return Math.hypot(p.x - (v.x + t*(w.x - v.x)), p.y - (v.y + t*(w.y - v.y)));
+    }
+
+    function draw(mx=null, my=null) {
+        let html = '';
+        for(let id in comps) {
+            comps[id].inputs.forEach((src, idx) => {
+                if(src && comps[src]) {
+                    let se = document.getElementById(src).querySelector('.port.out').getBoundingClientRect();
+                    let de = document.getElementById(id).querySelectorAll('.port.in')[idx] || document.getElementById(id).querySelector('.port.in');
+                    de = de.getBoundingClientRect();
+                    let w = canvasContainer.getBoundingClientRect();
+                    let x1=(se.left-w.left+6)/scale, y1=(se.top-w.top+6)/scale, x2=(de.left-w.left+6)/scale, y2=(de.top-w.top+6)/scale;
+                    
+                    let pts = (comps[id].waypoints && comps[id].waypoints[idx]) ? comps[id].waypoints[idx] : [];
+                    let d = `M ${x1} ${y1}`;
+                    pts.forEach(p => { d += ` L ${p.x} ${p.y}`; });
+                    d += ` L ${x2} ${y2}`;
+                    
+                    html += `<g class="connection">
+                                <path class="wire-hitbox" d="${d}" ondblclick="addWp(event, '${id}', ${idx})" oncontextmenu="removeWire(event, '${id}', ${idx})"></path>
+                                <path class="wire" d="${d}"></path>`;
+                    pts.forEach((p, i) => {
+                        html += `<circle cx="${p.x}" cy="${p.y}" r="6" class="waypoint" 
+                                   onmousedown="startDragWp(event, '${id}', ${idx}, ${i})"
+                                   ondblclick="removeWp(event, '${id}', ${idx}, ${i})"></circle>`;
+                    });
+                    html += `</g>`;
+                }
+            });
+        }
+        
+        // Rysowanie latającej linii podczas łączenia
+        if(actOut && mx!==null) {
+            let se = document.getElementById(actOut).querySelector('.port.out').getBoundingClientRect();
+            let w = canvasContainer.getBoundingClientRect();
+            let x1=(se.left-w.left+6)/scale, y1=(se.top-w.top+6)/scale;
+            
+            let d = `M ${x1} ${y1}`;
+            flyingWaypoints.forEach(p => { d += ` L ${p.x} ${p.y}`; });
+            d += ` L ${mx} ${my}`;
+            
+            html += `<path class="wire flying" d="${d}"></path>`;
+            flyingWaypoints.forEach(p => {
+                html += `<circle cx="${p.x}" cy="${p.y}" r="6" class="waypoint flying-wp"></circle>`;
+            });
+        }
+        svg.innerHTML = html;
+    }
+
+    function updateCB() {
+        let sel = document.getElementById('fault-target');
+        let old = sel.value;
+        sel.innerHTML = Object.values(comps).filter(c=>c.type!=='IN'&&c.type!=='NODE').map(c=>`<option value="${c.id}">${c.id}</option>`).join('');
+        if(comps[old]) sel.value = old;
+    }
+
+    function clearAll() { canvasContainer.querySelectorAll('.comp').forEach(e=>e.remove()); comps={}; cId=0; svg.innerHTML=''; document.getElementById('results').innerHTML='<p style="color: #666; text-align: center; margin-top: 50px;">Tabela wygeneruje się tutaj.</p>'; updateCB(); panX=0; panY=0; scale=1; applyTransform(); }
+
+    function loadExample() {
+        clearAll(); cId = 7;
+        let p = [
+            ['IN',40,50,'X8'],['IN',160,100,'X9'],['IN',280,150,'X10'],['IN',420,200,'X11'],['IN',40,350,'X12'],['IN',180,400,'X13'],['IN',330,400,'X14'],
+            ['NOT',120,50,'G0'],['AND',240,75,'G1'],['NAND',360,100,'G2'],['OR',500,125,'G3'],['NOR',150,330,'G4'],['XOR',300,350,'G5'],['XNOR',460,350,'G6']
+        ];
+        p.forEach(c => add(c[0], c[1], c[2], c[3]));
+        let c=comps; c['G0'].inputs[0]='X8'; c['G1'].inputs[0]='G0'; c['G1'].inputs[1]='X9'; c['G2'].inputs[0]='G1'; c['G2'].inputs[1]='X10';
+        c['G3'].inputs[0]='G2'; c['G3'].inputs[1]='X11'; c['G4'].inputs[0]='G3'; c['G4'].inputs[1]='X12'; c['G5'].inputs[0]='G4'; c['G5'].inputs[1]='X13'; c['G6'].inputs[0]='G5'; c['G6'].inputs[1]='X14';
+        document.getElementById('fault-target').value='G3'; draw();
+    }
+
+    // --- KOMUNIKACJA Z PYTHONEM (EEL) ---
+    async function runAlgo(fresh = false) {
+        if(fresh) userChoices = {};
+        let tgt = document.getElementById('fault-target').value;
+        let typ = document.getElementById('fault-type').value;
+        if(!tgt) return;
+        
+        lastResult = await eel.run_d_algorithm(comps, tgt, typ, userChoices)();
+        renderTable();
+    }
+
+    function setChoice(id, val) { userChoices[id] = parseInt(val); runAlgo(false); }
+
+    function resolveName(cid) {
+        let curr = cid;
+        let seen = new Set();
+        while(curr && comps[curr] && comps[curr].type === 'NODE') {
+            if(seen.has(curr)) break;
+            seen.add(curr);
+            let inps = comps[curr].inputs;
+            if(inps && inps[0]) curr = inps[0];
+            else break;
+        }
+        return curr;
+    }
+
+    function renderTable() {
+        if(!lastResult) return;
+        let res = document.getElementById('results');
+        let showNodes = document.getElementById('show-nodes').checked;
+        let dCols = lastResult.cols.filter(c => showNodes || comps[c].type !== 'NODE');
+
+        let fmt = (v) => v==='~D' ? '<span class="d-bar">D</span>' : (v==='D'?'<span class="d-norm">D</span>':v);
+
+        let h = `<table><tr><th>Krok</th>${dCols.map(c=>`<th>${resolveName(c)}</th>`).join('')}<th>Komentarz</th></tr>`;
+        lastResult.steps.forEach((s, i) => {
+            h += `<tr><td>${i+1}</td>`;
+            dCols.forEach(c => { h += `<td>${fmt(s.full ? s.s[c] : (s.delta[c]||''))}</td>`; });
+            h += `<td style="text-align:left">${s.msg}</td></tr>`;
+        });
+        h += `</table>`;
+
+        // Alternatywy
+        if(lastResult.decision_log.length > 0) {
+            h += `<div style="margin-top:20px; background:#1a1a1a; padding:15px; border-radius:6px; border: 1px solid #333;">
+                  <h4 style="color:var(--accent); margin:0 0 10px 0">⚙️ Alternatywne Decyzje</h4>
+                  <p style="font-size: 11px; margin-top:-5px; color:#aaa;">Zmień wybór, a tabela przeliczy się na nowo.</p>`;
+            lastResult.decision_log.forEach(d => {
+                h += `<div class="decision-row"><b style="font-size:12px; color:#ccc">${d.title}</b><select onchange="setChoice('${d.id}', this.value)">`;
+                d.options.forEach((o, i) => { h += `<option value="${i}" ${i===d.selected?'selected':''}>${o.label}</option>`; });
+                h += `</select></div>`;
+            });
+            h += `</div>`;
+        }
+        res.innerHTML = h;
+    }
+
+    window.onload = loadExample;
+</script>
+</body>
+</html>
