@@ -8,19 +8,32 @@
         :root { --bg: #121212; --panel: #1e1e1e; --text: #e0e0e0; --accent: #3498db; --danger: #e74c3c; --success: #2ecc71; --purple: #9b59b6; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        #header { background: #1a1a1a; padding: 15px 20px; display: flex; justify-content: space-between; border-bottom: 1px solid #333; z-index: 10; }
-        #header h2 { margin: 0; font-size: 20px; color: var(--accent); }
+        /* Zmiana CSS dla menu */
+        #menubar { background: #1a1a1a; display: flex; align-items: center; border-bottom: 1px solid #333; padding: 0 10px; height: 40px; z-index: 100; position: relative; }
+        .menu-brand { font-weight: bold; color: var(--accent); margin-right: 20px; font-size: 16px; }
+        .menu-item { position: relative; padding: 0 15px; cursor: pointer; color: #ccc; font-size: 13px; user-select: none; height: 100%; display: flex; align-items: center; box-sizing: border-box; }
+        .menu-item:hover { background: #333; color: white; }
+        .dropdown { position: absolute; top: 100%; left: 0; background: #2b2b2b; min-width: 200px; border: 1px solid #444; border-top: none; display: none; flex-direction: column; padding: 5px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 100; cursor: default; }
+        .dropdown hr { margin: 5px 0; border-color: #444; width: 100%; }
+        .menu-item:hover .dropdown { display: flex; }
+        .dropdown-item { padding: 8px 15px; cursor: pointer; color: #ccc; transition: 0.1s; font-size: 13px;}
+        .dropdown-item:hover { background: var(--accent); color: white; }
+        .dropdown-insert { padding: 10px; gap: 8px; width: 180px; }
+        .dropdown-insert .btn { padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; background: #2c3e50; color: white; transition: 0.2s; text-align: center; font-size: 13px; }
+        .dropdown-insert .btn:hover { background: #34495e; }
+        .dropdown-insert .toolbar-title { font-size: 11px; font-weight: bold; color: var(--accent); margin: 5px 0; }
         
         #main { display: flex; flex: 1; overflow: hidden; }
         
-        #toolbar { width: 180px; background: var(--panel); padding: 15px; border-right: 1px solid #333; display: flex; flex-direction: column; gap: 8px; z-index: 5; overflow-y: auto;}
         .btn { padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; background: #2c3e50; color: white; transition: 0.2s; text-align: center; font-size: 13px;}
         .btn:hover { background: #34495e; }
-        .btn-primary { background: var(--accent); }
-        .btn-primary:hover { background: #2980b9; }
         .btn-success { background: var(--success); font-size: 14px; padding: 12px; }
-        .btn-purple { background: var(--purple); }
-        .btn-purple:hover { background: #8e44ad; }
+        
+        /* Styl dla trybu podglądu */
+        body.mode-preview .port { opacity: 0 !important; pointer-events: none !important; }
+        body.mode-preview .comp { cursor: default !important; }
+        body.mode-preview .wire-hitbox { pointer-events: none !important; }
+        body.mode-preview .waypoint { display: none !important; }
         
         #workspace { flex: 1; position: relative; background: #121212; background-image: radial-gradient(#333 1px, transparent 1px); background-size: 25px 25px; overflow: hidden; }
         
@@ -84,54 +97,63 @@
         .decision-row { background: #2c3e50; padding: 10px; margin-bottom: 10px; border-radius: 6px; }
         select { width: 100%; padding: 5px; margin-top: 5px; background: #1a1a1a; color: white; border: 1px solid #555; border-radius: 4px;}
         
-        .toolbar-title { font-size: 11px; font-weight: bold; color: var(--accent); margin: 10px 0 5px 0; }
         hr { border-color:#333; width:100%; margin: 10px 0; }
     </style>
 </head>
 <body>
 
-<div id="header">
-    <h2>D-Algorytm PRO (Silnik Webowy)</h2>
-    <div style="display:flex; gap:10px;">
-        <button class="btn btn-primary" onclick="loadExample()">Zbuduj Schemat Przykładu</button>
-        <button class="btn" style="background:var(--danger)" onclick="clearAll()">Wyczyść Planszę</button>
-    </div>
-</div>
-
-<div id="main">
-    <div id="toolbar">
-        <div class="toolbar-title">ZAPIS I ODCZYT</div>
-        <div class="btn btn-purple" onclick="saveWorkspace()">Zapisz układ</div>
-        <div class="btn btn-purple" onclick="document.getElementById('file-input').click()">Wczytaj układ</div>
-        <!-- Niewidzialny input do obsługi plików w przeglądarce -->
-        <input type="file" id="file-input" style="display:none" accept=".json">
-        
-        <hr>
-        
-        <div class="toolbar-title">DODAJ ELEMENT</div>
-        <div class="btn" onclick="add('IN')" style="background:#1a3642; border: 1px solid var(--accent);">+ Wejście (IN)</div>
-        <div class="btn" onclick="add('NODE')">+ Węzeł (Kropka)</div>
-        
-        <hr>
-        
-        <div class="btn" onclick="add('AND')">Bramka AND</div>
-        <div class="btn" onclick="add('OR')">Bramka OR</div>
-        <div class="btn" onclick="add('NAND')">Bramka NAND</div>
-        <div class="btn" onclick="add('NOR')">Bramka NOR</div>
-        <div class="btn" onclick="add('XOR')">Bramka XOR</div>
-        <div class="btn" onclick="add('XNOR')">Bramka XNOR</div>
-        <div class="btn" onclick="add('NOT')">Bramka NOT</div>
-        
-        <div style="font-size: 11px; color:#aaa; margin-top:20px;">
-            <b>ŁĄCZENIE ELEMENTÓW:</b><br>
-            1. Kliknij czerwone, potem niebieskie wyjście.<br>
-            2. <b>Kliknij w tło</b>, by zagiąć kabel.<br>
-            3. <b>Podwójne kliknięcie</b> na kabel dodaje punkt.<br>
-            4. <b>Najedź myszką</b> na kabel, aby chwycić załamania.<br>
-            5. <b>Prawy Przycisk</b> na kabel go usuwa.<br>
-            6. <b>ESC</b> anuluje łączenie.
+<div id="menubar">
+    <div class="menu-brand">D-Algorytm PRO</div>
+    
+    <div class="menu-item">Plik
+        <div class="dropdown">
+            <div class="dropdown-item" onclick="document.getElementById('file-input').click()">Wczytaj układ</div>
+            <div class="dropdown-item" onclick="saveWorkspace()">Zapisz układ</div>
+            <hr>
+            <div class="dropdown-item" style="color:var(--danger)" onclick="clearAll()">Wyczyść Planszę</div>
+            <div class="dropdown-item" onclick="loadExample()">Zbuduj Schemat Przykładu</div>
         </div>
     </div>
+    
+    <div class="menu-item" id="menu-wstaw">Wstaw
+        <div class="dropdown dropdown-insert">
+            <div class="toolbar-title">DODAJ ELEMENT</div>
+            <div class="btn" onclick="add('IN')" style="background:#1a3642; border: 1px solid var(--accent);">+ Wejście (IN)</div>
+            <div class="btn" onclick="add('NODE')">+ Węzeł (Kropka)</div>
+            <hr>
+            <div class="btn" onclick="add('AND')">Bramka AND</div>
+            <div class="btn" onclick="add('OR')">Bramka OR</div>
+            <div class="btn" onclick="add('NAND')">Bramka NAND</div>
+            <div class="btn" onclick="add('NOR')">Bramka NOR</div>
+            <div class="btn" onclick="add('XOR')">Bramka XOR</div>
+            <div class="btn" onclick="add('XNOR')">Bramka XNOR</div>
+            <div class="btn" onclick="add('NOT')">Bramka NOT</div>
+        </div>
+    </div>
+    
+    <div class="menu-item">Tryb
+        <div class="dropdown">
+            <div class="dropdown-item" id="mode-build" onclick="setMode('build')">✓ Tryb Budowania</div>
+            <div class="dropdown-item" id="mode-preview" onclick="setMode('preview')">&nbsp;&nbsp;Tryb Podglądu</div>
+        </div>
+    </div>
+    
+    <div class="menu-item">Pomoc
+        <div class="dropdown" style="width: 250px; padding: 15px; font-size: 12px; line-height: 1.5; color: #ccc;">
+            <b style="color: white;">ŁĄCZENIE ELEMENTÓW:</b><br><br>
+            1. Kliknij czerwone, potem niebieskie wyjście.<br>
+            2. <b style="color: white;">Kliknij w tło</b>, by zagiąć kabel.<br>
+            3. <b style="color: white;">Podwójne kliknięcie</b> na kabel dodaje punkt.<br>
+            4. <b style="color: white;">Najedź myszką</b> na kabel, aby chwycić załamania.<br>
+            5. <b style="color: white;">Prawy Przycisk</b> na kabel go usuwa.<br>
+            6. <b style="color: white;">ESC</b> anuluje łączenie.
+        </div>
+    </div>
+</div>
+<!-- Niewidzialny input do obsługi plików w przeglądarce -->
+<input type="file" id="file-input" style="display:none" accept=".json">
+
+<div id="main">
 
     <div id="workspace">
         <div id="canvas-container" style="position: absolute; top:0; left:0; width: 100%; height: 100%; transform-origin: 0 0;">
@@ -166,6 +188,23 @@
 
 <script>
     let comps = {};
+    let currentMode = 'build';
+    
+    function setMode(mode) {
+        currentMode = mode;
+        if(mode === 'preview') {
+            document.body.classList.add('mode-preview');
+            document.getElementById('menu-wstaw').style.display = 'none';
+            document.getElementById('mode-build').innerHTML = '&nbsp;&nbsp;Tryb Budowania';
+            document.getElementById('mode-preview').innerHTML = '✓ Tryb Podglądu';
+            if(actOut) { actOut = null; flyingWaypoints = []; document.querySelectorAll('.port.out').forEach(p=>p.classList.remove('active')); draw(); }
+        } else {
+            document.body.classList.remove('mode-preview');
+            document.getElementById('menu-wstaw').style.display = 'flex';
+            document.getElementById('mode-build').innerHTML = '✓ Tryb Budowania';
+            document.getElementById('mode-preview').innerHTML = '&nbsp;&nbsp;Tryb Podglądu';
+        }
+    }
     let cId = 0;
     let drag = null, ox=0, oy=0;
     let actOut = null;
@@ -407,12 +446,16 @@
         }
         
         el.onmousedown = (e) => { 
+            if(currentMode === 'preview') return;
             if(e.button !== 0 || e.target.classList.contains('port')) return; 
             drag=id; 
             ox = e.clientX - ((comps[id].x * scale) + panX); 
             oy = e.clientY - ((comps[id].y * scale) + panY); 
         };
-        el.oncontextmenu = (e) => { showContextMenu(e, id); };
+        el.oncontextmenu = (e) => { 
+            if(currentMode === 'preview') return;
+            showContextMenu(e, id); 
+        };
         
         canvasContainer.appendChild(el);
         updateCB();
