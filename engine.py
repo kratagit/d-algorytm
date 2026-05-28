@@ -12,15 +12,7 @@ class DAlgorithmEngine:
         self.cols = []
 
     def resolve_name(self, cid):
-        curr = cid
-        seen = set()
-        while curr and self.components.get(curr, {}).get('type') == 'NODE':
-            if curr in seen: break
-            seen.add(curr)
-            inps = self.components[curr]['inputs']
-            if inps and inps[0]: curr = inps[0]
-            else: break
-        return curr
+        return cid
 
     def eval_gate(self, gtype, i1, i2):
         if gtype in ['IN', 'NODE']: return i1
