@@ -12,6 +12,10 @@ class DAlgorithmEngine:
         self.cols = []
 
     def resolve_name(self, cid):
+        c = self.components.get(cid)
+        while c and c['type'] == 'NODE':
+            cid = c['inputs'][0]
+            c = self.components.get(cid)
         return cid
 
     def eval_gate(self, gtype, i1, i2):
