@@ -204,8 +204,8 @@
     <div id="table-panel">
         <div id="panel-header">
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <select id="fault-target" style="flex:1; padding:8px; background:#1a1a1a; color:white; border:1px solid #555; border-radius:4px;"></select>
-                <select id="fault-type" style="width:70px; padding:8px; background:#1a1a1a; color:white; border:1px solid #555; border-radius:4px;">
+                <select id="fault-target" style="flex:1; padding:8px; background:#1a1a1a; color:white; border:1px solid #555; border-radius:4px;" onchange="runAlgo(true)"></select>
+                <select id="fault-type" style="width:70px; padding:8px; background:#1a1a1a; color:white; border:1px solid #555; border-radius:4px;" onchange="runAlgo(true)">
                     <option value="sa0">s-a-0</option>
                     <option value="sa1" selected>s-a-1</option>
                 </select>
@@ -498,26 +498,26 @@
             el.id = id;
             el.style.left = c.x + 'px'; el.style.top = c.y + 'px';
             
-            let ports = `<div class="port out" onclick="cOut(event, '${id}')"></div>`;
+            let ports = `<div class="port out" onclick="cOut(event, this.parentElement.id)"></div>`;
             if(c.type === 'NODE') {
-                el.innerHTML = `<div class="name-lbl">${id}</div><div class="port in in-center" onclick="cIn(event, '${id}', 0)"></div>` + ports;
+                el.innerHTML = `<div class="name-lbl">${id}</div><div class="port in in-center" onclick="cIn(event, this.parentElement.id, 0)"></div>` + ports;
             } else {
                 let n = `<div class="comp-inner"><span class="name-lbl">${id}</span></div>`;
                 if(c.type === 'IN') el.innerHTML = n + ports;
-                else if(c.type === 'NOT') el.innerHTML = `<div class="comp-bg">${getGateSVG(c.type)}</div>` + n + `<div class="port in in-center" onclick="cIn(event, '${id}', 0)" oncontextmenu="rmW(event, '${id}', 0)"></div>` + ports;
-                else el.innerHTML = `<div class="comp-bg">${getGateSVG(c.type)}</div>` + n + `<div class="port in in1" onclick="cIn(event, '${id}', 0)" oncontextmenu="rmW(event, '${id}', 0)"></div><div class="port in in2" onclick="cIn(event, '${id}', 1)" oncontextmenu="rmW(event, '${id}', 1)"></div>` + ports;
+                else if(c.type === 'NOT') el.innerHTML = `<div class="comp-bg">${getGateSVG(c.type)}</div>` + n + `<div class="port in in-center" onclick="cIn(event, this.parentElement.id, 0)" oncontextmenu="rmW(event, this.parentElement.id, 0)"></div>` + ports;
+                else el.innerHTML = `<div class="comp-bg">${getGateSVG(c.type)}</div>` + n + `<div class="port in in1" onclick="cIn(event, this.parentElement.id, 0)" oncontextmenu="rmW(event, this.parentElement.id, 0)"></div><div class="port in in2" onclick="cIn(event, this.parentElement.id, 1)" oncontextmenu="rmW(event, this.parentElement.id, 1)"></div>` + ports;
             }
             
-            el.onmousedown = (e) => { 
+            el.onmousedown = function(e) { 
                 if(currentMode === 'preview') return;
                 if(e.button !== 0 || e.target.classList.contains('port')) return; 
-                drag=id; 
-                ox = e.clientX - ((comps[id].x * scale) + panX); 
-                oy = e.clientY - ((comps[id].y * scale) + panY); 
+                drag = this.id; 
+                ox = e.clientX - ((comps[this.id].x * scale) + panX); 
+                oy = e.clientY - ((comps[this.id].y * scale) + panY); 
             };
-            el.oncontextmenu = (e) => { 
+            el.oncontextmenu = function(e) { 
                 if(currentMode === 'preview') return;
-                showContextMenu(e, id); 
+                showContextMenu(e, this.id); 
             };
             canvasContainer.appendChild(el);
         }
@@ -556,26 +556,26 @@
         el.id = id;
         el.style.left = x+'px'; el.style.top = y+'px';
         
-        let ports = `<div class="port out" onclick="cOut(event, '${id}')"></div>`;
+        let ports = `<div class="port out" onclick="cOut(event, this.parentElement.id)"></div>`;
         if(type === 'NODE') {
-            el.innerHTML = `<div class="name-lbl">${id}</div><div class="port in in-center" onclick="cIn(event, '${id}', 0)"></div>` + ports;
+            el.innerHTML = `<div class="name-lbl">${id}</div><div class="port in in-center" onclick="cIn(event, this.parentElement.id, 0)"></div>` + ports;
         } else {
             let n = `<div class="comp-inner"><span class="name-lbl">${id}</span></div>`;
             if(type === 'IN') el.innerHTML = n + ports;
-            else if(type === 'NOT') el.innerHTML = `<div class="comp-bg">${getGateSVG(type)}</div>` + n + `<div class="port in in-center" onclick="cIn(event, '${id}', 0)" oncontextmenu="rmW(event, '${id}', 0)"></div>` + ports;
-            else el.innerHTML = `<div class="comp-bg">${getGateSVG(type)}</div>` + n + `<div class="port in in1" onclick="cIn(event, '${id}', 0)" oncontextmenu="rmW(event, '${id}', 0)"></div><div class="port in in2" onclick="cIn(event, '${id}', 1)" oncontextmenu="rmW(event, '${id}', 1)"></div>` + ports;
+            else if(type === 'NOT') el.innerHTML = `<div class="comp-bg">${getGateSVG(type)}</div>` + n + `<div class="port in in-center" onclick="cIn(event, this.parentElement.id, 0)" oncontextmenu="rmW(event, this.parentElement.id, 0)"></div>` + ports;
+            else el.innerHTML = `<div class="comp-bg">${getGateSVG(type)}</div>` + n + `<div class="port in in1" onclick="cIn(event, this.parentElement.id, 0)" oncontextmenu="rmW(event, this.parentElement.id, 0)"></div><div class="port in in2" onclick="cIn(event, this.parentElement.id, 1)" oncontextmenu="rmW(event, this.parentElement.id, 1)"></div>` + ports;
         }
         
-        el.onmousedown = (e) => { 
+        el.onmousedown = function(e) { 
             if(currentMode === 'preview') return;
             if(e.button !== 0 || e.target.classList.contains('port')) return; 
-            drag=id; 
-            ox = e.clientX - ((comps[id].x * scale) + panX); 
-            oy = e.clientY - ((comps[id].y * scale) + panY); 
+            drag = this.id; 
+            ox = e.clientX - ((comps[this.id].x * scale) + panX); 
+            oy = e.clientY - ((comps[this.id].y * scale) + panY); 
         };
-        el.oncontextmenu = (e) => { 
+        el.oncontextmenu = function(e) { 
             if(currentMode === 'preview') return;
-            showContextMenu(e, id); 
+            showContextMenu(e, this.id); 
         };
         
         canvasContainer.appendChild(el);
@@ -591,9 +591,21 @@
         comps[newId] = comps[oldId];
         comps[newId].id = newId;
         delete comps[oldId];
-        document.getElementById(oldId).id = newId;
+        
+        let el = document.getElementById(oldId);
+        el.id = newId;
+        el.querySelector('.name-lbl').innerText = newId;
+        
         for(let k in comps) comps[k].inputs = comps[k].inputs.map(i => i===oldId?newId:i);
-        updateCB(); draw();
+        
+        let sel = document.getElementById('fault-target');
+        let wasSelected = (sel.value === oldId);
+        
+        updateCB(); 
+        if (wasSelected) sel.value = newId;
+        
+        draw();
+        runAlgo(true);
     }
 
     function cOut(e, id) { 
@@ -760,6 +772,7 @@
     }
 
     function draw(mx=null, my=null) {
+        autoSave();
         let html = '';
         for(let id in comps) {
             comps[id].inputs.forEach((src, idx) => {
@@ -836,6 +849,7 @@
         
         lastResult = await eel.run_d_algorithm(comps, tgt, typ, userChoices)();
         renderTable();
+        autoSave();
     }
 
     function setChoice(id, val) { userChoices[id] = parseInt(val); runAlgo(false); }
@@ -850,12 +864,12 @@
         let showNodes = document.getElementById('show-nodes').checked;
         let dCols = lastResult.cols.filter(c => showNodes || comps[c].type !== 'NODE');
 
-        let fmt = (v) => v==='~D' ? '<span class="d-bar">D</span>' : (v==='D'?'<span class="d-norm">D</span>':v);
+        let fmt = (v) => v==='~D' ? '<span class="d-bar">D</span>' : (v==='D'?'<span class="d-norm">D</span>': (v==='ERR'?'<span style="color:#ff4444; font-weight:bold;">❌</span>':v));
 
         let h = `<table><tr><th>Krok</th>${dCols.map(c=>`<th>${resolveName(c)}</th>`).join('')}<th>Komentarz</th></tr>`;
         lastResult.steps.forEach((s, i) => {
             h += `<tr><td>${i+1}</td>`;
-            dCols.forEach(c => { h += `<td>${fmt(s.full ? s.s[c] : (s.delta[c]||''))}</td>`; });
+            dCols.forEach(c => { h += `<td>${fmt(s.full ? s.s[c] : (s.delta[c] !== undefined ? s.delta[c] : ''))}</td>`; });
             h += `<td style="text-align:left">${s.msg}</td></tr>`;
         });
         h += `</table>`;
@@ -875,7 +889,29 @@
         res.innerHTML = h;
     }
 
-    window.onload = loadExample;
+    let autoSaveTimer = null;
+    function autoSave() {
+        clearTimeout(autoSaveTimer);
+        autoSaveTimer = setTimeout(() => {
+            let tgt = document.getElementById('fault-target').value;
+            let typ = document.getElementById('fault-type').value;
+            let data = { components: comps, counter: cId, target: tgt, fault_type: typ, choices: userChoices };
+            localStorage.setItem('d_algo_save', JSON.stringify(data));
+        }, 500);
+    }
+
+    window.onload = () => {
+        let saved = localStorage.getItem('d_algo_save');
+        if(saved) {
+            try {
+                let data = JSON.parse(saved);
+                userChoices = data.choices || {};
+                restoreComponents(data);
+                return;
+            } catch(e) {}
+        }
+        loadExample();
+    };
 </script>
 </body>
 </html>
