@@ -1,19 +1,21 @@
-Aby skompilować aplikację używającą biblioteki Eel do jednego pliku .exe, w którym zaszyty jest zarówno kod Pythona, jak i wszystkie pliki interfejsu z folderu `web` (HTML, CSS, JS), wykonaj poniższą komendę w terminalu (będąc w folderze z projektem):
+Aby skompilować aplikację używającą biblioteki Eel do jednego pliku .exe (korzystając z Nuitki), wykonaj poniższą komendę w terminalu:
 
-python -m nuitka --onefile --windows-console-mode=disable --include-data-dir=web=web main.py
+python -m nuitka --onefile --windows-console-mode=disable --include-data-dir=web=web --include-module=bottle_websocket --include-module=geventwebsocket main.py
 
 ===========================
 Znaczenie poszczególnych flag:
 ===========================
 --onefile 
     Kompiluje wszystko do jednego, wygodnego pliku .exe.
-    (Jeżeli wolisz uzyskać folder ze wszystkimi plikami i bardzo szybkim startem, zmień to na --standalone)
 
 --windows-console-mode=disable
-    Ukrywa czarne okienko konsoli (wiersza poleceń), dzięki czemu po kliknięciu ikonki otwiera się od razu czyste okno interfejsu graficznego.
+    Ukrywa czarne okienko konsoli. Błędy krytyczne (np. brak paczek) zostaną teraz wyłapane przez naszą nową funkcję i wyświetlą się w okienku graficznym!
 
 --include-data-dir=web=web
-    Niezwykle ważne w przypadku Eel! Pakuje cały folder "web" do pliku wykonywalnego, aby interfejs miał dostęp do HTMLa po zbudowaniu.
+    Pakuje cały folder "web" do pliku wykonywalnego.
+
+--include-module=...
+    Wymusza na Nuitce dopakowanie bibliotek sieciowych używanych w tle przez Eel (bottle_websocket, geventwebsocket), które często są pomijane i powodują zawieszanie na innych PC.
 
 main.py
     Główny skrypt, od którego zaczyna się działanie programu.
