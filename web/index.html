@@ -666,16 +666,17 @@
 
     function ctxRename() {
         if(!ctxTarget) return;
+        let id = ctxTarget;
         hideContextMenu();
-        let newId = prompt(`Podaj nową nazwę dla elementu ${ctxTarget}:`, ctxTarget);
-        if(newId !== null) rename(ctxTarget, newId);
+        let newId = prompt(`Podaj nową nazwę dla elementu ${id}:`, id);
+        if(newId !== null) rename(id, newId);
     }
 
     function ctxDelete() {
         if(!ctxTarget) return;
+        let id = ctxTarget;
         hideContextMenu();
-        if(confirm(`Usunąć ${ctxTarget}?`)) {
-            let id = ctxTarget;
+        if(confirm(`Usunąć ${id}?`)) {
             delete comps[id]; 
             for(let k in comps) comps[k].inputs = comps[k].inputs.map(i => i===id?null:i); 
             document.getElementById(id).remove(); 

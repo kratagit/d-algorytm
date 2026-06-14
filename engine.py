@@ -118,7 +118,7 @@ class DAlgorithmEngine:
             return self._get_result()
             
         opts = [{'label': ", ".join(f"{self.resolve_name(k)}={v}" for k,v in cb.items() if v!='x') or "Brak wymagań", 'data': cb} for cb in valid_cands]
-        idx = self.make_decision(f'excite_{self.target_node}', f"Pobudzenie {self.target_node} na {req_h}", opts)
+        idx = self.make_decision(f'excite_{self.target_node}', f"Pobudzenie błędu: {self.target_node} na {req_h}", opts)
         chosen = opts[idx]['data']
         
         delta = {}
@@ -128,7 +128,7 @@ class DAlgorithmEngine:
             if v != 'x':
                 if self.assign_state(k, v, delta): conflict = True
                 
-        self.add_step(f"Pobudzenie błędu na {self.target_node}. Wymagane: {opts[idx]['label']}", delta=delta, full=False)
+        self.add_step(f"Pobudzenie błędu: {self.target_node}. Wymagane: {opts[idx]['label']}", delta=delta, full=False)
 
         curr_node = self.target_node
         while not conflict:
@@ -148,7 +148,7 @@ class DAlgorithmEngine:
                 if item not in unique_items: unique_items.append(item)
             
             opts = [{'label': f"Przez {g['id']} ({g['type']})", 'data': (g, d_src)} for g, d_src in unique_items]
-            n_idx = self.make_decision(f'branch_{curr_node}', f"Błąd propaguje z {self.resolve_name(curr_node)}. Wybierz drogę:", opts)
+            n_idx = self.make_decision(f'branch_{curr_node}', f"Propagacja błędu z {self.resolve_name(curr_node)}. Wybierz drogę:", opts)
             n_gate, direct_src = opts[n_idx]['data']
             
             if n_gate['type'] == 'NOT':
@@ -156,7 +156,7 @@ class DAlgorithmEngine:
                 delta = {}
                 if self.assign_state(n_gate['id'], new_sym, delta): conflict = True
                 curr_node = n_gate['id']
-                self.add_step(f"Propagacja przez {n_gate['id']} (NOT). Znak zaktualizowany.", delta=delta, full=False)
+                self.add_step(f"Propagacja błędu przez {n_gate['id']} (NOT). Znak zaktualizowany.", delta=delta, full=False)
                 continue
                 
             port_idx = n_gate['inputs'].index(direct_src)
@@ -179,12 +179,12 @@ class DAlgorithmEngine:
                     valid_sens.append({'val': v, 'sym': 'D' if (h_out=='1' and f_out=='0') else '~D'})
                     
             if not valid_sens:
-                self.add_step(f"BŁĄD: Blokada na {n_gate['id']}", full=False)
+                self.add_step(f"SPRZECZNOŚĆ (Blokada propagacji) na {n_gate['id']}! Drugie wejście ma stan '{o_state}', który uniemożliwia przepuszczenie błędu.", full=False)
                 conflict = True
                 break
                 
             opts = [{'label': f"{self.resolve_name(other_inp)}={vs['val']} (wypuści {vs['sym']})", 'data': vs} for vs in valid_sens]
-            s_idx = self.make_decision(f'prop_{n_gate["id"]}', f"Uczulenie bramki {n_gate['id']}", opts)
+            s_idx = self.make_decision(f'prop_{n_gate["id"]}', f"Propagacja błędu przez {n_gate['id']}", opts)
             chosen = opts[s_idx]['data']
             
             delta = {}
@@ -199,7 +199,7 @@ class DAlgorithmEngine:
             
             curr_node = n_gate['id']
             req_msg = f"{self.resolve_name(other_inp)}={chosen['val']}" if (other_inp and chosen['val']!='x') else "Brak"
-            self.add_step(f"Propagacja przez {n_gate['id']}. Wymagane: {req_msg}", delta=delta, full=False)
+            self.add_step(f"Propagacja błędu przez {n_gate['id']}. Wymagane: {req_msg}", delta=delta, full=False)
 
         self.add_step("Stan po propagacji (Podsumowanie)", full=True)
 
@@ -238,11 +238,16 @@ class DAlgorithmEngine:
                     
                     if not valid_cands:
                         conflict = True
-                        self.add_step(f"SPRZECZNOŚĆ przy wyliczaniu {cid}={val}", full=False)
+                        n0_name = self.resolve_name(in0) if in0 else 'Brak'
+                        n1_name = self.resolve_name(in1) if in1 else 'Brak'
+                        s0_val = self.algo_state.get(n0_name, 'x')
+                        s1_val = self.algo_state.get(n1_name, 'x')
+                        msg = f"SPRZECZNOŚĆ na {cid}={val}! Bramka {g['type']} ma na wejściach: {n0_name}={s0_val}, {n1_name}={s1_val}. Funkcja logiczna bramki wyklucza taki wynik."
+                        self.add_step(msg, full=False)
                         break
                         
                     opts = [{'label': ", ".join(f"{self.resolve_name(k)}={v}" for k,v in cb.items() if v!='x') or "Gotowe", 'data': cb} for cb in valid_cands]
-                    j_idx = self.make_decision(f'just_{cid}', f"Zgodność na {cid}={val}", opts)
+                    j_idx = self.make_decision(f'just_{cid}', f"Badanie zgodności stanu na {cid}={val}", opts)
                     chosen = opts[j_idx]['data']
                     
                     delta = {}
@@ -253,7 +258,7 @@ class DAlgorithmEngine:
                             changed = True
                             
                     if delta:
-                        self.add_step(f"Zgodność na {cid}={val}. Wymagane: {opts[j_idx]['label']}", delta=delta, full=False)
+                        self.add_step(f"Badanie zgodności stanu na {cid}={val}. Wymagane: {opts[j_idx]['label']}", delta=delta, full=False)
 
         if not conflict:
             self.add_step("TEST (Stan końcowy układu)", full=True)
