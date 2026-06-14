@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>D-Algorytm PRO (Silnik Webowy)</title>
     <script type="text/javascript" src="/eel.js"></script>
+    <script type="text/javascript" src="examples.js"></script>
     <style>
         :root { --bg: #121212; --panel: #1e1e1e; --text: #e0e0e0; --accent: #3498db; --danger: #e74c3c; --success: #2ecc71; --purple: #9b59b6; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -136,7 +137,7 @@
 <body>
 
 <div id="menubar">
-    <div class="menu-brand">D-Algorytm PRO</div>
+    <div class="menu-brand">D-Algorytm</div>
     
     <div class="menu-item">Plik
         <div class="dropdown">
@@ -144,7 +145,11 @@
             <div class="dropdown-item" onclick="saveWorkspace()">Zapisz układ</div>
             <hr>
             <div class="dropdown-item" style="color:var(--danger)" onclick="clearAll()">Wyczyść Planszę</div>
-            <div class="dropdown-item" onclick="loadExample()">Zbuduj Schemat Przykładu</div>
+            <hr>
+            <div class="dropdown-item" onclick="loadExample(1)">Załaduj Przykład 1</div>
+            <div class="dropdown-item" onclick="loadExample(2)">Załaduj Przykład 2</div>
+            <div class="dropdown-item" onclick="loadExample(4)">Załaduj Przykład 4</div>
+            <div class="dropdown-item" onclick="loadExample(5)">Załaduj Przykład 5</div>
         </div>
     </div>
     
@@ -433,10 +438,39 @@
         }
         
         if(actOut) {
-            let w = ws.getBoundingClientRect();
-            draw((e.clientX - w.left - panX) / scale, (e.clientY - w.top - panY) / scale);
+            let {mx, my} = getSnappedPosition(e);
+            draw(mx, my);
         }
     };
+    
+    function getSnappedPosition(e) {
+        let w = ws.getBoundingClientRect();
+        let mx = (e.clientX - w.left - panX) / scale;
+        let my = (e.clientY - w.top - panY) / scale;
+        
+        if (e.shiftKey && actOut) {
+            let lastX, lastY;
+            if (flyingWaypoints.length > 0) {
+                lastX = flyingWaypoints[flyingWaypoints.length - 1].x;
+                lastY = flyingWaypoints[flyingWaypoints.length - 1].y;
+            } else {
+                let outPort = document.getElementById(actOut).querySelector('.port.out');
+                if (outPort) {
+                    let rect = outPort.getBoundingClientRect();
+                    lastX = (rect.left + rect.width/2 - w.left - panX) / scale;
+                    lastY = (rect.top + rect.height/2 - w.top - panY) / scale;
+                } else {
+                    lastX = mx; lastY = my;
+                }
+            }
+            if (Math.abs(mx - lastX) > Math.abs(my - lastY)) {
+                my = lastY;
+            } else {
+                mx = lastX;
+            }
+        }
+        return {mx, my};
+    }
     
     window.onmouseup = (e) => { 
         isResizing = false; 
@@ -653,9 +687,7 @@
         
         if(actOut) { 
             // Dodawanie waypointu do latającej linii
-            let w = ws.getBoundingClientRect();
-            let mx = (e.clientX - w.left - panX) / scale;
-            let my = (e.clientY - w.top - panY) / scale;
+            let {mx, my} = getSnappedPosition(e);
             flyingWaypoints.push({x: mx, y: my});
             draw(mx, my);
         }
@@ -828,16 +860,10 @@
 
     function clearAll() { canvasContainer.querySelectorAll('.comp').forEach(e=>e.remove()); comps={}; cId=0; svg.innerHTML=''; document.getElementById('results').innerHTML='<p style="color: #666; text-align: center; margin-top: 50px;">Tabela wygeneruje się tutaj.</p>'; updateCB(); panX=0; panY=0; scale=1; applyTransform(); }
 
-    function loadExample() {
-        clearAll(); cId = 7;
-        let p = [
-            ['IN',40,50,'X8'],['IN',160,100,'X9'],['IN',280,150,'X10'],['IN',420,200,'X11'],['IN',40,350,'X12'],['IN',180,400,'X13'],['IN',330,400,'X14'],
-            ['NOT',120,50,'G0'],['AND',240,75,'G1'],['NAND',360,100,'G2'],['OR',500,125,'G3'],['NOR',150,330,'G4'],['XOR',300,350,'G5'],['XNOR',460,350,'G6']
-        ];
-        p.forEach(c => add(c[0], c[1], c[2], c[3]));
-        let c=comps; c['G0'].inputs[0]='X8'; c['G1'].inputs[0]='G0'; c['G1'].inputs[1]='X9'; c['G2'].inputs[0]='G1'; c['G2'].inputs[1]='X10';
-        c['G3'].inputs[0]='G2'; c['G3'].inputs[1]='X11'; c['G4'].inputs[0]='G3'; c['G4'].inputs[1]='X12'; c['G5'].inputs[0]='G4'; c['G5'].inputs[1]='X13'; c['G6'].inputs[0]='G5'; c['G6'].inputs[1]='X14';
-        document.getElementById('fault-target').value='G3'; draw();
+    function loadExample(num) {
+        if(EXAMPLES[num]) {
+            restoreComponents(EXAMPLES[num]);
+        }
     }
 
     // --- KOMUNIKACJA Z PYTHONEM (EEL) ---
@@ -910,7 +936,7 @@
                 return;
             } catch(e) {}
         }
-        loadExample();
+        clearAll();
     };
 </script>
 </body>
