@@ -1,0 +1,66 @@
+name: Release
+
+# Merge PR na main z etykietą patch / minor / major -> testy, build .exe i GitHub Release.
+# Wersja nie jest zapisana w repozytorium: to ostatni tag vX.Y.Z podbity zgodnie z etykietą
+# (pierwsze wydanie: v1.0.0). PR bez etykiety nie tworzy wydania.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: >-
+      github.event.pull_request.merged &&
+      (contains(github.event.pull_request.labels.*.name, 'patch') ||
+       contains(github.event.pull_request.labels.*.name, 'minor') ||
+       contains(github.event.pull_request.labels.*.name, 'major'))
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0   # tagi potrzebne do wyliczenia wersji
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: python -m pip install -r requirements-dev.txt
+
+      - name: Wylicz wersję
+        id: ver
+        shell: bash
+        env:
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ' ') }}
+        run: |
+          case " $LABELS " in *" major "*) bump=major;; *" minor "*) bump=minor;; *) bump=patch;; esac
+          last=$(git tag --list 'v*' --sort=-v:refname | head -n1)
+          IFS=. read -r major minor patch <<< "${last#v}"
+          if [ -z "$last" ]; then v=1.0.0
+          elif [ "$bump" = major ]; then v="$((major + 1)).0.0"
+          elif [ "$bump" = minor ]; then v="$major.$((minor + 1)).0"
+          else v="$major.$minor.$((patch + 1))"; fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Wersja: $v ($bump, poprzednia: ${last:-brak})"
+
+      - name: Testy i build .exe
+        run: python build.py
+
+      - name: Utwórz GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.ver.outputs.version }}
+          SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        run: |
+          asset="dist/d-algorytm-$V-windows-x64.exe"
+          mv dist/D-Algorytm.exe "$asset"
+          gh release create "v$V" "$asset" --target "$SHA" --title "D-Algorytm v$V" --generate-notes
