@@ -146,10 +146,7 @@
             <hr>
             <div class="dropdown-item" style="color:var(--danger)" onclick="clearAll()">Wyczyść Planszę</div>
             <hr>
-            <div class="dropdown-item" onclick="loadExample(1)">Załaduj Przykład 1</div>
-            <div class="dropdown-item" onclick="loadExample(2)">Załaduj Przykład 2</div>
-            <div class="dropdown-item" onclick="loadExample(4)">Załaduj Przykład 4</div>
-            <div class="dropdown-item" onclick="loadExample(5)">Załaduj Przykład 5</div>
+            <div id="examples-menu" style="display:contents"></div>
         </div>
     </div>
     
@@ -865,6 +862,10 @@
             restoreComponents(EXAMPLES[num]);
         }
     }
+
+    // Przyciski przykładów generowane z web/examples.js (buduj_przyklady.py)
+    document.getElementById('examples-menu').innerHTML = Object.keys(EXAMPLES)
+        .map(n => `<div class="dropdown-item" onclick="loadExample(${n})">Załaduj Przykład ${n}</div>`).join('');
 
     // --- KOMUNIKACJA Z PYTHONEM (EEL) ---
     async function runAlgo(fresh = false) {
