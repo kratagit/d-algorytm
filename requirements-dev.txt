@@ -1,0 +1,4 @@
+# Budowanie i testy: pip install -r requirements-dev.txt
+-r requirements.txt
+Nuitka==4.3
+pytest==9.1.1

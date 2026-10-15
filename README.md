@@ -35,27 +35,36 @@ Jądro aplikacji stanowi klasa `DAlgorithmEngine`, odpowiedzialna za trawienie u
 
 ---
 
-## 🚀 Kompilacja i Uruchamianie
+## 🚀 Uruchamianie, testy i budowanie
 
-Program działa natywnie poprzez środowisko wirtualne Pythona, ale może być skompilowany do **jednego pliku wykonywalnego (`.exe`)** za pomocą narzędzia *Nuitka*.
-
-### Kompilacja (Nuitka)
-Do paczki kompilacyjnej musi zostać załączony cały interfejs webowy. Komenda do zbudowania pełnoprawnej, przenośnej (portable) aplikacji bez widocznego terminala to:
-
+### Środowisko
 ```bash
-python -m nuitka --onefile --windows-console-mode=disable --include-data-dir=web=web main.py
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements-dev.txt   # samo uruchamianie: requirements.txt
 ```
 
-* `--include-data-dir=web=web` – Dołącza foldery z HTML, CSS i JS wewnątrz zagnieżdżonego systemu plików pliku `.exe`. 
-* `--windows-console-mode=disable` – Ukrywa czarne okno terminala, uruchamiając tylko nowoczesne okno UI.
-* Nuitka automatycznie rozpozna importy `Eel` i spakuje ukryte pliki komunikacyjne (np. `eel.js`).
+### Uruchomienie ze źródeł
+```bash
+python main.py
+```
 
-### Dodawanie Wbudowanych Przykładów (JSON)
-Aby nowo utworzony przykładowy układ (`[NUMER].json`) był na stałe widoczny pod przyciskami w menu "Plik", bez konieczności trzymania plików obok uruchomionego `.exe`:
-1. Zapisz schemat za pomocą "Zapisz układ".
-2. Umieść plik (np. `3.json`) w głównym katalogu projektu.
-3. Wykonaj skrypt pomocniczy: `python buduj_przyklady.py`. Skrypt zaszyje JSONa bezpośrednio do zmiennej JS (`web/examples.js`).
-4. Dodaj nowy przycisk do menu w kodzie `web/index.html`.
-5. Przebuduj projekt Nuitką.
+### Testy
+```bash
+python -m pytest
+```
+Testy (`tests/`) obejmują logikę bramek, scenariusze D-Algorytmu na małych układach oraz wszystkie przykładowe układy: dla każdej bramki, typu usterki i każdej ścieżki w drzewie decyzji wygenerowany wektor jest weryfikowany niezależnym symulatorem z wstrzykniętą usterką. Na GitHubie testy uruchamia workflow `CI` przy każdym pushu i pull requeście.
+
+### Budowanie `.exe` (Nuitka)
+```bash
+python build.py               # przykłady -> testy -> dist/D-Algorytm.exe
+python build.py --skip-tests  # bez testów
+```
+Skrypt regeneruje `web/examples.js`, uruchamia testy i kompiluje `main.py` Nuitką do jednego pliku bez okna konsoli (z wbudowanym folderem `web/` i modułami sieciowymi Eel). Przy pierwszym buildzie Nuitka pobiera do swojego cache Dependency Walker oraz – jeśli nie ma Visual Studio (MSVC) – kompilator C.
+
+### Dodawanie wbudowanych przykładów (JSON)
+1. Zapisz schemat za pomocą „Zapisz układ”.
+2. Umieść plik jako `[NUMER].json` (np. `3.json`) w głównym katalogu projektu.
+3. Uruchom `python buduj_przyklady.py` (robi to też `build.py`) – wszystkie pliki `[NUMER].json` zostaną zaszyte w `web/examples.js`, a przyciski w menu „Plik” wygenerują się same.
 
 ---

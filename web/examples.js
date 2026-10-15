@@ -1,4 +1,5 @@
-const EXAMPLES = {1:{
+const EXAMPLES = {
+    1: {
     "components": {
         "X5": {
             "id": "X5",
@@ -340,7 +341,8 @@ const EXAMPLES = {1:{
     "counter": 22,
     "target": "G0",
     "fault_type": "sa1"
-},2:{
+},
+    2: {
     "components": {
         "16": {
             "id": "16",
@@ -607,7 +609,8 @@ const EXAMPLES = {1:{
     "counter": 20,
     "target": "G2",
     "fault_type": "sa0"
-},4:{
+},
+    4: {
     "components": {
         "X8": {
             "id": "X8",
@@ -753,7 +756,8 @@ const EXAMPLES = {1:{
     "counter": 21,
     "target": "G3",
     "fault_type": "sa1"
-},5:{
+},
+    5: {
     "components": {
         "18": {
             "id": "18",
@@ -1129,4 +1133,5 @@ const EXAMPLES = {1:{
     "counter": 19,
     "target": "G6",
     "fault_type": "sa0"
-}};
+},
+};
