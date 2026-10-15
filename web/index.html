@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>D-Algorytm</title>
+    <title>DIANA – diagnostyka i analiza układów cyfrowych</title>
     <script type="text/javascript" src="/eel.js"></script>
     <script type="text/javascript" src="examples.js"></script>
     <style>
@@ -137,7 +137,7 @@
 <body>
 
 <div id="menubar">
-    <div class="menu-brand">D-Algorytm</div>
+    <div class="menu-brand" title="DIagnostyka i ANAliza układów cyfrowych">DIANA</div>
     
     <div class="menu-item">Plik
         <div class="dropdown">
@@ -490,7 +490,7 @@
         let url = URL.createObjectURL(blob);
         let a = document.createElement('a');
         a.href = url;
-        a.download = "uklad_d_algorytm.json";
+        a.download = "uklad_diana.json";
         a.click();
         URL.revokeObjectURL(url);
     }

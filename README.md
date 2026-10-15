@@ -1,8 +1,10 @@
-# D-Algorytm PRO (Silnik Webowy)
+# DIANA – interaktywny system diagnostyki i analizy układów cyfrowych
 
-D-Algorytm PRO to zaawansowane narzędzie edukacyjno-inżynierskie pozwalające na projektowanie układów logicznych i automatyczne generowanie wektorów testowych (ATPG) dla pojedynczych usterek typu *stuck-at* (s-a-0, s-a-1). Projekt implementuje klasyczny D-Algorytm ze śledzeniem decyzji, nawracaniem (backtrackingiem) oraz szczegółowym, krokowym wyjaśnianiem podejmowanych akcji.
+**DIANA** (*DIagnostyka i ANAliza układów cyfrowych*) to narzędzie edukacyjno-inżynierskie pozwalające na projektowanie układów logicznych i automatyczne generowanie wektorów testowych (ATPG) dla pojedynczych usterek typu *stuck-at* (s-a-0, s-a-1). Projekt implementuje klasyczny D-Algorytm ze śledzeniem decyzji, nawracaniem (backtrackingiem) oraz szczegółowym, krokowym wyjaśnianiem podejmowanych akcji.
 
 Rozwiązanie to łączy wydajność obliczeniową Pythona z nowoczesnym, w pełni interaktywnym, sprzętowo akcelerowanym interfejsem stworzonym w technologiach webowych (Vanilla JS / SVG).
+
+Gotowy plik `.exe` dla Windows: [najnowsze wydanie](https://github.com/kratagit/d-algorytm/releases/latest).
 
 ---
 
@@ -57,13 +59,13 @@ Testy (`tests/`) obejmują logikę bramek, scenariusze D-Algorytmu na małych uk
 
 ### Budowanie `.exe` (Nuitka)
 ```bash
-python build.py               # przykłady -> testy -> dist/D-Algorytm.exe
+python build.py               # przykłady -> testy -> dist/DIANA.exe
 python build.py --skip-tests  # bez testów
 ```
 Skrypt regeneruje `web/examples.js`, uruchamia testy i kompiluje `main.py` Nuitką do jednego pliku bez okna konsoli (z wbudowanym folderem `web/` i modułami sieciowymi Eel). Przy pierwszym buildzie Nuitka pobiera do swojego cache Dependency Walker oraz – jeśli nie ma Visual Studio (MSVC) – kompilator C.
 
 ### Wydania (GitHub Releases)
-Wydanie powstaje po merge'u PR na `main` oznaczonego etykietą `patch`, `minor` lub `major`. Workflow `Release` uruchamia testy, buduje `.exe` na Windows i publikuje release z plikiem `d-algorytm-<wersja>-windows-x64.exe`. Wersja jest wyliczana automatycznie z ostatniego tagu `vX.Y.Z` (pierwsze wydanie: `v1.0.0`) i nie jest zapisana w kodzie:
+Wydanie powstaje po merge'u PR na `main` oznaczonego etykietą `patch`, `minor` lub `major`. Workflow `Release` uruchamia testy, buduje `.exe` na Windows i publikuje release z plikiem `diana-<wersja>-windows-x64.exe`. Wersja jest wyliczana automatycznie z ostatniego tagu `vX.Y.Z` (pierwsze wydanie: `v1.0.0`) i nie jest zapisana w kodzie:
 
 | Etykieta | Kiedy | Przykład |
 |---|---|---|
