@@ -62,6 +62,17 @@ python build.py --skip-tests  # bez testów
 ```
 Skrypt regeneruje `web/examples.js`, uruchamia testy i kompiluje `main.py` Nuitką do jednego pliku bez okna konsoli (z wbudowanym folderem `web/` i modułami sieciowymi Eel). Przy pierwszym buildzie Nuitka pobiera do swojego cache Dependency Walker oraz – jeśli nie ma Visual Studio (MSVC) – kompilator C.
 
+### Wydania (GitHub Releases)
+Wydanie powstaje po merge'u PR na `main` oznaczonego etykietą `patch`, `minor` lub `major`. Workflow `Release` uruchamia testy, buduje `.exe` na Windows i publikuje release z plikiem `d-algorytm-<wersja>-windows-x64.exe`. Wersja jest wyliczana automatycznie z ostatniego tagu `vX.Y.Z` (pierwsze wydanie: `v1.0.0`) i nie jest zapisana w kodzie:
+
+| Etykieta | Kiedy | Przykład |
+|---|---|---|
+| `patch` | poprawki błędów | `1.2.3` → `1.2.4` |
+| `minor` | nowe funkcje | `1.2.3` → `1.3.0` |
+| `major` | zmiany niekompatybilne (np. nowy format pliku układu) | `1.2.3` → `2.0.0` |
+
+PR bez etykiety nie tworzy wydania.
+
 ### Dodawanie wbudowanych przykładów (JSON)
 1. Zapisz schemat za pomocą „Zapisz układ”.
 2. Umieść plik jako `[NUMER].json` (np. `3.json`) w głównym katalogu projektu.

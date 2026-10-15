@@ -15,7 +15,7 @@ Język projektu: **polski** (UI, komunikaty silnika, komentarze w kodzie, README
 - Uruchomienie: `python main.py` – otwiera okno Chrome / Edge (fallback: domyślna przeglądarka), port losowy (`port=0`).
 - Testy: `python -m pytest` (konfiguracja w `pyproject.toml`, ~170 testów, kilka sekund).
 - Build: `python build.py` → regeneracja `web/examples.js`, testy, Nuitka → `dist/D-Algorytm.exe`. Flagi Nuitki opisane w `build.py`.
-- CI (`.github/workflows/ci.yml`): pytest przy każdym pushu na `main` i pull requeście.
+- CI (`.github/workflows/`): `ci.yml` – pytest przy każdym pushu na `main` i pull requeście; `release.yml` – merge PR na `main` z etykietą `patch`/`minor`/`major` → testy, build na `windows-latest` i GitHub Release `vX.Y.Z` z plikiem `d-algorytm-X.Y.Z-windows-x64.exe`. Wersja istnieje **tylko jako tag** (ostatni tag podbity wg etykiety, start `v1.0.0`) – w kodzie nie ma pliku z wersją; nie tworzyć tagów ręcznie. PR bez etykiety nie tworzy wydania.
 - Podgląd samego frontendu bez backendu: konfiguracja `web-static` w `.claude/launch.json` (serwer statyczny na `web/`; `eel` wtedy nie istnieje).
 
 ## Struktura
@@ -60,10 +60,11 @@ Ważne szczegóły:
 
 ## Konwencje
 
-- **Priorytetem jest czystość kodu i przejrzystość repozytorium.** Wybieraj najprostsze rozwiązanie; nie dodawaj narzędzi, automatyzacji ani warstw, które nie są niezbędne (np. świadomie zrezygnowano z wersjonowania i automatycznych release'ów).
+- **Priorytetem jest czystość kodu i przejrzystość repozytorium.** Wybieraj najprostsze rozwiązanie; nie dodawaj narzędzi, automatyzacji ani warstw, które nie są niezbędne (np. wersja nie jest zapisywana w kodzie ani wyliczana z commitów – decyduje etykieta PR).
 - Styl kodu zwarty (wiele instrukcji w jednej linii, krótkie nazwy zmiennych) – zachowywać spójność z otoczeniem.
 - Zmiany w strukturze komponentu muszą być zgodne po obu stronach (`index.html`: `add`, `restoreComponents`, `saveWorkspace`, `autoSave`; `engine.py`) oraz ze starymi plikami JSON/`localStorage`.
 - Po zmianie przykładów JSON uruchomić `python buduj_przyklady.py`.
 - Po zmianach w `engine.py` uruchomić `python -m pytest`. `test_examples.py` wymaga, by każdy wektor kończący się wierszem „TEST” faktycznie wykrywał usterkę i by każda testowalna usterka miała co najmniej jedną ścieżkę decyzji prowadzącą do testu.
 - Komunikaty skryptów wypisywane po polsku – `sys.stdout.reconfigure(encoding='utf-8')` jest potrzebne w konsoli Windows (cp1252).
 - Commity: Conventional Commits po angielsku (`feat:`, `fix:`, `chore:`, `refactor:`…).
+- **Przy tworzeniu PR zawsze zapytaj użytkownika o rodzaj wydania** – `patch` / `minor` / `major` / bez wydania – podając swoją propozycję z krótkim uzasadnieniem, i ustaw wybraną etykietę na PR (`gh pr create --label …` lub `gh pr edit --add-label …`). Bez etykiety PR nie tworzy release'u.
