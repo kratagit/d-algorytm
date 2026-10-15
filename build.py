@@ -1,7 +1,7 @@
 # build.py
-# Budowanie aplikacji D-Algorytm do jednego pliku .exe (Nuitka).
+# Budowanie aplikacji DIANA do jednego pliku .exe (Nuitka).
 #
-#   python build.py                -> przykłady + testy + kompilacja do dist/D-Algorytm.exe
+#   python build.py                -> przykłady + testy + kompilacja do dist/DIANA.exe
 #   python build.py --skip-tests   -> jak wyżej, bez uruchamiania testów
 import argparse
 import os
@@ -12,7 +12,7 @@ import buduj_przyklady
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DIST_DIR = os.path.join(BASE_DIR, 'dist')
-EXE_NAME = 'D-Algorytm.exe'
+EXE_NAME = 'DIANA.exe'
 
 
 def run(cmd):
@@ -50,6 +50,6 @@ def build(skip_tests=False):
 
 if __name__ == '__main__':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # polskie znaki w konsoli Windows (cp1252)
-    parser = argparse.ArgumentParser(description="Budowanie D-Algorytm do pliku .exe")
+    parser = argparse.ArgumentParser(description="Budowanie DIANA do pliku .exe")
     parser.add_argument('--skip-tests', action='store_true', help="nie uruchamiaj testów przed kompilacją")
     build(parser.parse_args().skip_tests)

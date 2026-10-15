@@ -4,7 +4,11 @@ Wskazówki dla Claude Code przy pracy w tym repozytorium.
 
 ## O projekcie
 
-**D-Algorytm** – narzędzie edukacyjne (część pracy magisterskiej) do rysowania układów kombinacyjnych i generowania wektorów testowych (ATPG) klasycznym D-Algorytmem dla pojedynczych usterek *stuck-at* (s-a-0 / s-a-1). Wynik to tabela krok po kroku (pobudzenie → propagacja → badanie zgodności) z komentarzami oraz lista punktów decyzyjnych, w których użytkownik może wybrać alternatywną ścieżkę.
+**DIANA** (*DIagnostyka i ANAliza układów cyfrowych*) – narzędzie edukacyjne (część pracy magisterskiej) do rysowania układów kombinacyjnych i generowania wektorów testowych (ATPG) klasycznym D-Algorytmem dla pojedynczych usterek *stuck-at* (s-a-0 / s-a-1). Wynik to tabela krok po kroku (pobudzenie → propagacja → badanie zgodności) z komentarzami oraz lista punktów decyzyjnych, w których użytkownik może wybrać alternatywną ścieżkę.
+
+Nazwa aplikacji to **DIANA**; „D-Algorytm” oznacza wyłącznie sam algorytm (np. `DAlgorithmEngine`). Repozytorium na GitHubie nazywa się nadal `d-algorytm`.
+
+Kierunek rozwoju (temat pracy): drugi silnik **PODEM** z heurystykami SCOAP – koszty sterowalności `c0`, `c1` i obserwowalności `O` każdej linii – oraz porównanie wydajności D-Algorytmu i PODEM (np. liczba nawrotów w drzewie przeszukiwań) na topologiach ze ścieżkami zbieżnymi i redundancją; do tego zestaw ćwiczeń laboratoryjnych.
 
 Język projektu: **polski** (UI, komunikaty silnika, komentarze w kodzie, README).
 
@@ -14,8 +18,8 @@ Język projektu: **polski** (UI, komunikaty silnika, komentarze w kodzie, README
 - Środowisko: `.venv` w katalogu projektu; `requirements.txt` – runtime (Eel), `requirements-dev.txt` – dodatkowo Nuitka i pytest. Python wołać jako `.venv/Scripts/python`.
 - Uruchomienie: `python main.py` – otwiera okno Chrome / Edge (fallback: domyślna przeglądarka), port losowy (`port=0`).
 - Testy: `python -m pytest` (konfiguracja w `pyproject.toml`, ~170 testów, kilka sekund).
-- Build: `python build.py` → regeneracja `web/examples.js`, testy, Nuitka → `dist/D-Algorytm.exe`. Flagi Nuitki opisane w `build.py`.
-- CI (`.github/workflows/`): `ci.yml` – pytest przy każdym pushu na `main` i pull requeście; `release.yml` – merge PR na `main` z etykietą `patch`/`minor`/`major` → testy, build na `windows-latest` i GitHub Release `vX.Y.Z` z plikiem `d-algorytm-X.Y.Z-windows-x64.exe`. Wersja istnieje **tylko jako tag** (ostatni tag podbity wg etykiety, start `v1.0.0`) – w kodzie nie ma pliku z wersją; nie tworzyć tagów ręcznie. PR bez etykiety nie tworzy wydania.
+- Build: `python build.py` → regeneracja `web/examples.js`, testy, Nuitka → `dist/DIANA.exe`. Flagi Nuitki opisane w `build.py`.
+- CI (`.github/workflows/`): `ci.yml` – pytest przy każdym pushu na `main` i pull requeście; `release.yml` – merge PR na `main` z etykietą `patch`/`minor`/`major` → testy, build na `windows-latest` i GitHub Release `vX.Y.Z` z plikiem `diana-X.Y.Z-windows-x64.exe`. Wersja istnieje **tylko jako tag** (ostatni tag podbity wg etykiety, start `v1.0.0`) – w kodzie nie ma pliku z wersją; nie tworzyć tagów ręcznie. PR bez etykiety nie tworzy wydania.
 - Podgląd samego frontendu bez backendu: konfiguracja `web-static` w `.claude/launch.json` (serwer statyczny na `web/`; `eel` wtedy nie istnieje).
 
 ## Struktura

@@ -61,6 +61,6 @@ jobs:
           V: ${{ steps.ver.outputs.version }}
           SHA: ${{ github.event.pull_request.merge_commit_sha }}
         run: |
-          asset="dist/d-algorytm-$V-windows-x64.exe"
-          mv dist/D-Algorytm.exe "$asset"
-          gh release create "v$V" "$asset" --target "$SHA" --title "D-Algorytm v$V" --generate-notes
+          asset="dist/diana-$V-windows-x64.exe"
+          mv dist/DIANA.exe "$asset"
+          gh release create "v$V" "$asset" --target "$SHA" --title "DIANA v$V" --generate-notes
