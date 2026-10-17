@@ -1,0 +1,119 @@
+{
+  "opis": "Układ z zajęć (TESTER 3.GAT) – multiplekser z rozgałęzieniem wejścia.",
+  "zrodlo": "MiDST/TESTER/3.GAT",
+  "components": {
+    "G0": {
+      "id": "G0",
+      "type": "NOT",
+      "x": 307,
+      "y": 410,
+      "inputs": [
+        "W8",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X1": {
+      "id": "X1",
+      "type": "IN",
+      "x": 102,
+      "y": 250,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X2": {
+      "id": "X2",
+      "type": "IN",
+      "x": 102,
+      "y": 365,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X3": {
+      "id": "X3",
+      "type": "IN",
+      "x": 102,
+      "y": 518,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G4": {
+      "id": "G4",
+      "type": "AND",
+      "x": 512,
+      "y": 256,
+      "inputs": [
+        "X1",
+        "W8"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G5": {
+      "id": "G5",
+      "type": "AND",
+      "x": 512,
+      "y": 461,
+      "inputs": [
+        "G0",
+        "X3"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G6": {
+      "id": "G6",
+      "type": "NOR",
+      "x": 717,
+      "y": 358,
+      "inputs": [
+        "G4",
+        "G5"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W8": {
+      "id": "W8",
+      "type": "NODE",
+      "x": 269,
+      "y": 378,
+      "inputs": [
+        "X2",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    }
+  },
+  "counter": 9
+}

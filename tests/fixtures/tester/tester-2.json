@@ -1,0 +1,203 @@
+{
+  "opis": "Układ z zajęć (TESTER 2.GAT) – cztery wyjścia.",
+  "zrodlo": "MiDST/TESTER/2.GAT",
+  "components": {
+    "G0": {
+      "id": "G0",
+      "type": "NOT",
+      "x": 205,
+      "y": 102,
+      "inputs": [
+        "X7",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G1": {
+      "id": "G1",
+      "type": "AND",
+      "x": 205,
+      "y": 205,
+      "inputs": [
+        "X8",
+        "X9"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G2": {
+      "id": "G2",
+      "type": "NAND",
+      "x": 205,
+      "y": 307,
+      "inputs": [
+        "X10",
+        "X11"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G3": {
+      "id": "G3",
+      "type": "OR",
+      "x": 614,
+      "y": 205,
+      "inputs": [
+        "G0",
+        "W16"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G4": {
+      "id": "G4",
+      "type": "NOR",
+      "x": 614,
+      "y": 307,
+      "inputs": [
+        "W16",
+        "W17"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G5": {
+      "id": "G5",
+      "type": "XOR",
+      "x": 614,
+      "y": 410,
+      "inputs": [
+        "W16",
+        "W17"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G6": {
+      "id": "G6",
+      "type": "XNOR",
+      "x": 614,
+      "y": 512,
+      "inputs": [
+        "W16",
+        "W17"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X7": {
+      "id": "X7",
+      "type": "IN",
+      "x": 102,
+      "y": 122,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X8": {
+      "id": "X8",
+      "type": "IN",
+      "x": 102,
+      "y": 198,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X9": {
+      "id": "X9",
+      "type": "IN",
+      "x": 102,
+      "y": 262,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X10": {
+      "id": "X10",
+      "type": "IN",
+      "x": 51,
+      "y": 378,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X11": {
+      "id": "X11",
+      "type": "IN",
+      "x": 51,
+      "y": 467,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W16": {
+      "id": "W16",
+      "type": "NODE",
+      "x": 397,
+      "y": 211,
+      "inputs": [
+        "G1",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W17": {
+      "id": "W17",
+      "type": "NODE",
+      "x": 397,
+      "y": 429,
+      "inputs": [
+        "G2",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    }
+  },
+  "counter": 18
+}

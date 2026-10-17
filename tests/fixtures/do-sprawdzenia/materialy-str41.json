@@ -1,0 +1,259 @@
+{
+  "components": {
+    "X1": {
+      "id": "X1",
+      "type": "IN",
+      "x": 60,
+      "y": 60,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X2": {
+      "id": "X2",
+      "type": "IN",
+      "x": 60,
+      "y": 160,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X3": {
+      "id": "X3",
+      "type": "IN",
+      "x": 60,
+      "y": 300,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X4": {
+      "id": "X4",
+      "type": "IN",
+      "x": 60,
+      "y": 400,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X5": {
+      "id": "X5",
+      "type": "IN",
+      "x": 60,
+      "y": 500,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X6": {
+      "id": "X6",
+      "type": "IN",
+      "x": 60,
+      "y": 640,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G1": {
+      "id": "G1",
+      "type": "NOT",
+      "x": 220,
+      "y": 145,
+      "inputs": [
+        "X2",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G2": {
+      "id": "G2",
+      "type": "NOT",
+      "x": 220,
+      "y": 385,
+      "inputs": [
+        "X4",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G3": {
+      "id": "G3",
+      "type": "NOR",
+      "x": 400,
+      "y": 255,
+      "inputs": [
+        "W1",
+        "W2"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G4": {
+      "id": "G4",
+      "type": "AND",
+      "x": 580,
+      "y": 85,
+      "inputs": [
+        "X1",
+        "W1"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G5": {
+      "id": "G5",
+      "type": "AND",
+      "x": 580,
+      "y": 245,
+      "inputs": [
+        "G3",
+        "X3"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G6": {
+      "id": "G6",
+      "type": "AND",
+      "x": 580,
+      "y": 415,
+      "inputs": [
+        "W2",
+        "X5"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G7": {
+      "id": "G7",
+      "type": "OR",
+      "x": 920,
+      "y": 285,
+      "inputs": [
+        "G10",
+        "G6"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G8": {
+      "id": "G8",
+      "type": "AND",
+      "x": 580,
+      "y": 555,
+      "inputs": [
+        "W1",
+        "W2"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G9": {
+      "id": "G9",
+      "type": "OR",
+      "x": 750,
+      "y": 600,
+      "inputs": [
+        "G8",
+        "X6"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G10": {
+      "id": "G10",
+      "type": "OR",
+      "x": 750,
+      "y": 165,
+      "inputs": [
+        "G4",
+        "G5"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W1": {
+      "id": "W1",
+      "type": "NODE",
+      "x": 340,
+      "y": 172,
+      "inputs": [
+        "G1",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W2": {
+      "id": "W2",
+      "type": "NODE",
+      "x": 340,
+      "y": 412,
+      "inputs": [
+        "G2",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    }
+  },
+  "counter": 18,
+  "target": "G2",
+  "fault_type": "sa1"
+}

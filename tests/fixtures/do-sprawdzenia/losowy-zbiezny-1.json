@@ -1,0 +1,148 @@
+{
+  "opis": "random_circuit(seed=117, reconvergent=True) z tests/random_circuits.py",
+  "components": {
+    "X1": {
+      "id": "X1",
+      "type": "IN",
+      "x": 60,
+      "y": 60,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X2": {
+      "id": "X2",
+      "type": "IN",
+      "x": 60,
+      "y": 170,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X3": {
+      "id": "X3",
+      "type": "IN",
+      "x": 60,
+      "y": 280,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G4": {
+      "id": "G4",
+      "type": "OR",
+      "x": 250,
+      "y": 170,
+      "inputs": [
+        "X1",
+        "X3"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G5": {
+      "id": "G5",
+      "type": "XNOR",
+      "x": 440,
+      "y": 170,
+      "inputs": [
+        "X2",
+        "W6"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W6": {
+      "id": "W6",
+      "type": "NODE",
+      "x": 370,
+      "y": 197,
+      "inputs": [
+        "G4",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G7": {
+      "id": "G7",
+      "type": "XNOR",
+      "x": 630,
+      "y": 170,
+      "inputs": [
+        "W6",
+        "W9"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G8": {
+      "id": "G8",
+      "type": "NOR",
+      "x": 820,
+      "y": 170,
+      "inputs": [
+        "W6",
+        "G7"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W9": {
+      "id": "W9",
+      "type": "NODE",
+      "x": 560,
+      "y": 197,
+      "inputs": [
+        "G5",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G10": {
+      "id": "G10",
+      "type": "XNOR",
+      "x": 1010,
+      "y": 170,
+      "inputs": [
+        "G8",
+        "W9"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    }
+  },
+  "counter": 10,
+  "target": "G10",
+  "fault_type": "sa0"
+}
