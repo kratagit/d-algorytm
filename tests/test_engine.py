@@ -1,4 +1,4 @@
-from helpers import check_fault, circuit, final_state, fixtures, known_bug, load_circuit, report, run_engine
+from helpers import check_fault, circuit, final_state, fixtures, load_circuit, report, run_engine
 from oracle import is_testable
 
 
@@ -51,11 +51,11 @@ def test_fanout_through_node_creates_branch_decision():
                     G1=('AND', 'X1', 'X2'), W1=('NODE', 'G1'),
                     G2=('OR', 'W1', 'X3'), G3=('AND', 'W1', 'X4'))
     res = run_engine(comps, 'G1', 'sa0')
-    branch = next(d for d in res['decision_log'] if d['id'] == 'branch_G1')
+    branch = next(d for d in res['decision_log'] if d['id'] == 'branch_G2_G3')
     assert [o['label'] for o in branch['options']] == ['Przez G2 (OR)', 'Przez G3 (AND)']
     assert final_state(res)['G2'] == 'D'
 
-    s = final_state(run_engine(comps, 'G1', 'sa0', {'branch_G1': 1}))
+    s = final_state(run_engine(comps, 'G1', 'sa0', {'branch_G2_G3': 1}))
     assert (s['G3'], s['X4'], s['W1']) == ('D', '1', 'D')
 
 
@@ -95,7 +95,7 @@ def test_steps_have_consistent_shape():
         assert set(step['delta']) <= set(res['cols'])
 
 
-# --- Minimalne układy znanych błędów (tests/fixtures/do-sprawdzenia/blad-*.json, opisane w README.md tamże) ---
+# --- Minimalne układy błędów wersji 1.1.0 (tests/fixtures/do-sprawdzenia/blad-*.json, opisane w README.md tamże) ---
 
 BLEDY = {name: load_circuit(path) for name, path in fixtures('do-sprawdzenia').items() if name.startswith('blad-')}
 
@@ -116,31 +116,26 @@ def test_minimal_circuits_facts():
     assert not is_testable(comps['blad-5-wiersz-po-sprzecznosci'], 'G1', 0)
 
 
-@known_bug('zbiezne_d')
 def test_reconvergent_d_on_both_inputs():
     problems = bug_case('blad-1-zbiezne-galezie')
     assert not problems, report(problems)
 
 
-@known_bug('to_samo_zrodlo')
 def test_gate_with_both_inputs_from_same_signal():
     problems = bug_case('blad-2-to-samo-zrodlo')
     assert not problems, report(problems)
 
 
-@known_bug('brak_d_algebry')
 def test_redundant_fault_gets_no_test():
     problems = bug_case('blad-3-falszywy-test')
     assert not problems, report(problems)
 
 
-@known_bug('brak_d_algebry')
 def test_requirement_satisfied_by_d_values():
     problems = bug_case('blad-4-falszywa-sprzecznosc')
     assert not problems, report(problems)
 
 
-@known_bug('podsumowanie_po_sprzecznosci')
 def test_no_summary_after_propagation_conflict():
     data = BLEDY['blad-5-wiersz-po-sprzecznosci']
     steps = run_engine(data['components'], data['target'], data['fault_type'])['steps']

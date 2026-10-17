@@ -11,18 +11,11 @@ import re
 import pytest
 
 import buduj_przyklady
-from helpers import ROOT, app_examples, check_fault, fixtures, gate_targets, known_bug, load_circuit, report
+from helpers import ROOT, app_examples, check_fault, fixtures, gate_targets, load_circuit, report
 from oracle import Oracle, gate_inputs, primary_inputs, primary_outputs
 
 MANUAL = fixtures('do-sprawdzenia')
 CIRCUITS = {**app_examples(), **fixtures('tester'), 'materialy-str41': MANUAL['materialy-str41']}
-
-KNOWN = {  # (układ, linia, usterka) -> znane błędy silnika
-    ('edytor-6', 'G11', 'sa0'): ('jedna_sciezka',),
-    ('tester-rosa', 'G8', 'sa0'): ('jedna_sciezka',),
-    ('edytor-x', 'G8', 'sa1'): ('to_samo_zrodlo',),
-    **{('edytor-x', g, f): ('zbiezne_d', 'jedna_sciezka') for g in ('G0', 'G4', 'G5', 'G6') for f in ('sa0', 'sa1')},
-}
 
 
 def _cases():
@@ -30,8 +23,7 @@ def _cases():
         comps = load_circuit(path)['components']
         for target in gate_targets(comps):
             for fault in ('sa0', 'sa1'):
-                bugs = KNOWN.get((name, target, fault))
-                yield pytest.param(name, target, fault, id=f'{name}-{target}-{fault}', marks=[known_bug(*bugs)] if bugs else [])
+                yield pytest.param(name, target, fault, id=f'{name}-{target}-{fault}')
 
 
 def test_circuits_exist():

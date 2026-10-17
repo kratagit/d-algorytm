@@ -24,24 +24,16 @@ CONFLICT = 'sprzecznosc'       # zgłoszona sprzeczność/blokada/błąd pobudze
 COMPLETENESS = 'kompletnosc'   # usterka testowalna, a żadna ścieżka decyzji nie daje testu
 OPTIONS = 'opcje'              # wadliwa lista decyzji (powtórzone opcje, wybór poza zakresem)
 
-# Znane błędy i ograniczenia obecnego silnika (engine.py). Testy, które je wykrywają, są oznaczone
-# jako oczekiwane porażki; gdy błąd zostanie naprawiony, pytest zgłosi XPASS i oznaczenie trzeba usunąć.
+# Znane rozbieżności obecnego silnika (engine.py). Testy, które je wykrywają, są oznaczone jako oczekiwane
+# porażki; gdy rozbieżność zostanie usunięta, pytest zgłosi XPASS i oznaczenie trzeba zdjąć.
 KNOWN_BUGS = {
-    'jedna_sciezka': 'silnik prowadzi błąd tylko jedną ścieżką – brak jednoczesnej propagacji kilkoma ścieżkami '
-                     '(materiały, str. 42)',
-    'zbiezne_d': 'gdy błąd dochodzi do obu wejść bramki (np. D i D), silnik zgłasza blokadę propagacji, choć D AND D = D',
-    'to_samo_zrodlo': 'bramka z oboma wejściami z tego samego sygnału: wymaganie jednego wejścia jest nadpisywane przez x '
-                      '– fałszywy TEST',
-    'brak_d_algebry': 'badanie zgodności nie stosuje D-algebry (D i ~D liczone jak 0): nieprawdziwe wartości w tabeli, '
-                      'fałszywe testy i fałszywe sprzeczności',
-    'podsumowanie_po_sprzecznosci': 'po sprzeczności w propagacji tabela pokazuje jeszcze wiersz „Stan po propagacji”',
-    'bramki_wielowejsciowe': 'silnik obsługuje tylko bramki 2-wejściowe, a przykłady z materiałów używają 3-wejściowego OR',
-    'format_tabeli': 'kroki tabeli nie mają znacznika etapu ani wiersza „Wybór ścieżki propagacji” jak w materiałach',
+    'format_tabeli': 'tabela różni się formą od materiałów (str. 41): brak wiersza „Wybór ścieżki propagacji”, '
+                     'wartości z implikacji pojawiają się wcześniej, inna kolejność badania zgodności',
 }
 
 
 def known_bug(*keys):
-    return pytest.mark.xfail(strict=True, reason='znany błąd silnika: ' + '; '.join(KNOWN_BUGS[k] for k in keys))
+    return pytest.mark.xfail(strict=True, reason='znana rozbieżność: ' + '; '.join(KNOWN_BUGS[k] for k in keys))
 
 
 def circuit(**spec):
@@ -161,7 +153,10 @@ def _check_conflict(n, step, oracle):
     """Sprzeczność jest prawdziwa, jeśli dotychczasowych przypisań nie da się zrealizować żadnym wektorem."""
     s = step['s']
     gate = next(k for k, v in step['delta'].items() if v == 'ERR')
-    if 'Blokada propagacji' in step['msg']:
+    if 'D-granica' in step['msg']:
+        if oracle.realizable(s, lambda d: any(d[o] in D_VALUES for o in oracle.outputs)):
+            return [(CONFLICT, f'krok {n}: fałszywa pusta D-granica – przy obecnych przypisaniach błąd może dotrzeć do wyjścia')]
+    elif 'Blokada propagacji' in step['msg']:
         if oracle.realizable(s, lambda d: d[gate] in D_VALUES):
             return [(CONFLICT, f'krok {n}: fałszywa blokada na {gate} – przy obecnych przypisaniach błąd może przez nią przejść')]
     elif oracle.realizable(s):

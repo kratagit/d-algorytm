@@ -81,8 +81,10 @@ def test_tabela_4_zgodna_z_d_algebra(gate):
 @pytest.mark.parametrize('gate', GATES)
 @pytest.mark.parametrize('value', ['0', '1'])
 def test_tabela_5_pierwotne_szesciany(gate, value):
-    eng = DAlgorithmEngine({}, None, 'sa0', {})
-    cubes = {(c[0], c[1], value) for c in eng.get_justifications(gate, value)}
+    """Badanie zgodności dla bramki z nieustalonymi wejściami proponuje dokładnie pierwotne sześciany z materiałów."""
+    eng = DAlgorithmEngine(circuit(X1='IN', X2='IN', G1=(gate, 'X1', 'X2')), 'G1', 'sa0', {})
+    eng.prepare()
+    cubes = {(o.get('X1', 'x'), o.get('X2', 'x'), value) for o in eng.requirement_options('G1', value)}
     assert cubes == {row for row in TABELA_5[gate] if row[2] == value}
 
 
@@ -169,7 +171,7 @@ def _normalize(step, columns):
     return row
 
 
-@known_bug('bramki_wielowejsciowe', 'format_tabeli')
+@known_bug('format_tabeli')
 def test_tabela_dalgorytmu_str41():
     data = EXAMPLE['dalgorytm_str41']
     expected = [{k: v for k, v in row.items() if k != 'sciezka'} for row in data['tabela']]

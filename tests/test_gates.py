@@ -3,10 +3,11 @@ import itertools
 import pytest
 
 from helpers import circuit
-from oracle import LOGIC
+from oracle import LOGIC, d_gate
 from engine import DAlgorithmEngine
 
 GATES = ['AND', 'OR', 'NAND', 'NOR', 'XOR', 'XNOR']
+VALUES = ['0', '1', 'D', '~D', 'x']
 
 
 @pytest.fixture
@@ -14,54 +15,75 @@ def eng():
     return DAlgorithmEngine({}, None, 'sa0', {})
 
 
+def prepared(comps, target, fault='sa0'):
+    eng = DAlgorithmEngine(comps, target, fault, {})
+    eng.prepare()
+    return eng
+
+
 @pytest.mark.parametrize('gate', GATES)
-def test_eval_gate_truth_table(eng, gate):
+def test_eval_truth_table(eng, gate):
     for a, b in itertools.product([0, 1], repeat=2):
-        assert eng.eval_gate(gate, str(a), str(b)) == str(LOGIC[gate]([a, b]))
+        assert eng.eval_values(gate, [str(a), str(b)]) == str(LOGIC[gate]([a, b]))
 
 
-def test_eval_gate_not_and_passthrough(eng):
-    assert eng.eval_gate('NOT', '0', None) == '1'
-    assert eng.eval_gate('NOT', '1', None) == '0'
-    assert eng.eval_gate('NOT', 'x', None) == 'x'
-    assert eng.eval_gate('NODE', '1', None) == '1'
-    assert eng.eval_gate('IN', '0', None) == '0'
+@pytest.mark.parametrize('gate', GATES + ['NOT'])
+def test_eval_matches_d_algebra(eng, gate):
+    """Wartości w D-algebrze (z x) zgodne z niezależną wyrocznią dla wszystkich kombinacji wejść."""
+    for ins in itertools.product(VALUES, repeat=1 if gate == 'NOT' else 2):
+        assert eng.eval_values(gate, list(ins)) == d_gate(gate, *ins), ins
+
+
+def test_eval_not_and_passthrough(eng):
+    assert eng.eval_values('NOT', ['0']) == '1'
+    assert eng.eval_values('NOT', ['x']) == 'x'
+    assert eng.eval_values('NODE', ['1']) == '1'
+    assert eng.eval_values('IN', ['0']) == '0'
 
 
 @pytest.mark.parametrize('gate,ctrl,out', [
     ('AND', '0', '0'), ('NAND', '0', '1'), ('OR', '1', '1'), ('NOR', '1', '0'),
 ])
-def test_eval_gate_controlling_value_beats_x(eng, gate, ctrl, out):
-    assert eng.eval_gate(gate, ctrl, 'x') == out
-    assert eng.eval_gate(gate, 'x', ctrl) == out
-
-
-@pytest.mark.parametrize('gate', GATES)
-def test_eval_gate_unknown_without_controlling_value(eng, gate):
-    nc = {'AND': '1', 'NAND': '1', 'OR': '0', 'NOR': '0'}.get(gate, '0')
-    assert eng.eval_gate(gate, nc, 'x') == 'x'
-    assert eng.eval_gate(gate, 'x', 'x') == 'x'
+def test_eval_controlling_value_beats_x(eng, gate, ctrl, out):
+    assert eng.eval_values(gate, [ctrl, 'x']) == out
+    assert eng.eval_values(gate, ['x', ctrl]) == out
 
 
 @pytest.mark.parametrize('gate', GATES)
 @pytest.mark.parametrize('val', ['0', '1'])
-def test_justifications_are_sound_and_complete(eng, gate, val):
-    """Każda kombinacja z get_justifications daje 'val' niezależnie od 'x',
-    a każde wejście dające 'val' jest pokryte przez którąś kombinację."""
-    cands = eng.get_justifications(gate, val)
-    assert cands
-    for cand in cands:
+def test_requirement_options_sound_and_complete(gate, val):
+    """Każda opcja daje 'val' niezależnie od pozostałych 'x', a każde wejście dające 'val' jest pokryte."""
+    eng = prepared(circuit(X1='IN', X2='IN', G1=(gate, 'X1', 'X2')), 'G1')
+    options = eng.requirement_options('G1', val)
+    assert options
+    covers = lambda o, a, b: o.get('X1', str(a)) == str(a) and o.get('X2', str(b)) == str(b)
+    for o in options:
         for a, b in itertools.product([0, 1], repeat=2):
-            if cand[0] in ('x', str(a)) and cand[1] in ('x', str(b)):
-                assert str(LOGIC[gate]([a, b])) == val, (cand, a, b)
+            if covers(o, a, b): assert str(LOGIC[gate]([a, b])) == val, (o, a, b)
     for a, b in itertools.product([0, 1], repeat=2):
-        if str(LOGIC[gate]([a, b])) == val:
-            assert any(c[0] in ('x', str(a)) and c[1] in ('x', str(b)) for c in cands), (a, b)
+        if str(LOGIC[gate]([a, b])) == val: assert any(covers(o, a, b) for o in options), (a, b)
 
 
-def test_justifications_not(eng):
-    assert eng.get_justifications('NOT', '1') == [{0: '0'}]
-    assert eng.get_justifications('NOT', '0') == [{0: '1'}]
+def test_requirement_options_not():
+    eng = prepared(circuit(X1='IN', G1=('NOT', 'X1')), 'G1')
+    assert eng.requirement_options('G1', '1') == [{'X1': '0'}]
+    assert eng.requirement_options('G1', '0') == [{'X1': '1'}]
+
+
+def test_requirement_options_use_d_values_only_where_error_can_reach():
+    # G3 = XOR(W1, G2) z W1 = D: wartość 1 daje G2 = ~D (G2 = NOT(W1) leży w zasięgu błędu)
+    comps = circuit(X1='IN', X2='IN', G1=('AND', 'X1', 'X2'), W1=('NODE', 'G1'), G2=('NOT', 'W1'),
+                    G3=('XOR', 'W1', 'G2'), G4=('XOR', 'W1', 'X2'))
+    eng = prepared(comps, 'G1')
+    eng.assign_state('G1', 'D', {})
+    assert eng.requirement_options('G3', '1') == [{'G2': '~D'}]
+    assert eng.requirement_options('G4', '1') == []  # X2 nie może mieć wartości D
+
+
+def test_requirement_options_merge_pins_from_same_line():
+    eng = prepared(circuit(X1='IN', X2='IN', G1=('OR', 'X1', 'X2'), W1=('NODE', 'G1'), G2=('AND', 'W1', 'W1')), 'G2')
+    assert eng.requirement_options('G2', '0') == [{'G1': '0'}]
+    assert eng.requirement_options('G2', '1') == [{'G1': '1'}]
 
 
 def test_resolve_name_follows_node_chain():

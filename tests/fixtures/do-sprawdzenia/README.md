@@ -2,44 +2,49 @@
 
 Każdy plik wczytasz w aplikacji: **Plik → Wczytaj układ**. Wybierz bramkę i typ usterki, kliknij **Oblicz Test**, a wynik porównaj z kluczem poniżej. Klucz wyznaczyła wyrocznia testów (`tests/oracle.py`) – sprawdzenie wszystkich kombinacji wejść w układzie zdatnym i z usterką.
 
-Jak czytać klucz: test z aplikacji jest poprawny, jeśli **każde** jego uzupełnienie (każde `x` zamienione na 0 i na 1) jest na liście testów danej usterki. Opisy „co pokazuje aplikacja” dotyczą obecnego silnika (wersja 1.1.0).
+Jak czytać klucz: test z aplikacji jest poprawny, jeśli **każde** jego uzupełnienie (każde `x` zamienione na 0 i na 1) jest na liście testów danej usterki. Opisy „teraz” dotyczą naprawionego silnika (po wersji 1.1.0).
 
-## 1. Znane błędy silnika (najmniejsze możliwe układy)
+## 1. Błędy wersji 1.1.0 – najmniejsze możliwe układy (naprawione)
 
 ### `blad-1-zbiezne-galezie.json`
 
 Błąd dochodzi do G3 dwiema gałęziami (bezpośrednio z W1 i przez G2).
 
-- **Co pokazuje aplikacja:** G1 s-a-0, domyślne wybory: aplikacja zgłasza „SPRZECZNOŚĆ (Blokada propagacji) na G3! Drugie wejście ma stan D”.
+- **Wersja 1.1.0 pokazywała:** G1 s-a-0, domyślne wybory: aplikacja zgłasza „SPRZECZNOŚĆ (Blokada propagacji) na G3! Drugie wejście ma stan D”.
 - **Prawda (do policzenia na kartce):** Dla X1=1, X2=1, X3=0: zdatny G1=1, G2=1, G3=1; z usterką G1=0, G2=0, G3=0 – wyjście się różni, więc błąd przez G3 przechodzi (D AND D = D). Blokady nie ma.
+- **Teraz (domyślne wybory):** propagacja przez G2 (X3=0), a z implikacji G3 = D AND D = D – TEST X1=1, X2=1, X3=0.
 
 ### `blad-2-to-samo-zrodlo.json`
 
 Oba wejścia G2 = AND są podłączone do tego samego węzła W1 (bramka działa jak bufor).
 
-- **Co pokazuje aplikacja:** G2 s-a-1, domyślne wybory: aplikacja pokazuje TEST bez żadnych wymagań na wejściach (X1, X2 = x).
+- **Wersja 1.1.0 pokazywała:** G2 s-a-1, domyślne wybory: aplikacja pokazuje TEST bez żadnych wymagań na wejściach (X1, X2 = x).
 - **Prawda (do policzenia na kartce):** G2 = G1 = X1 OR X2. Usterkę s-a-1 wykrywa tylko X1=0, X2=0 (zdatny G2=0, z usterką 1). Np. X1=1 niczego nie wykrywa – to nie jest test.
+- **Teraz (domyślne wybory):** pobudzenie wymaga G1=0, badanie zgodności daje X1=0, X2=0 – TEST 00, jedyny poprawny.
 
 ### `blad-3-falszywy-test.json`
 
 G4 = XOR(XNOR(X1, G1), NOT(G1)) = X1 – wyjście nie zależy od G1, więc usterek G1 nie da się wykryć.
 
-- **Co pokazuje aplikacja:** G1 s-a-0, wybory „Propagacja błędu z G1. Wybierz drogę” → „Przez G3 (NOT)” oraz „Propagacja błędu przez G4” → „G2=1”: aplikacja pokazuje TEST X1=0, X2=0.
+- **Wersja 1.1.0 pokazywała:** G1 s-a-0, wybory „Propagacja błędu z G1. Wybierz drogę” → „Przez G3 (NOT)” oraz „Propagacja błędu przez G4” → „G2=1”: aplikacja pokazuje TEST X1=0, X2=0.
 - **Prawda (do policzenia na kartce):** Dla X1=0, X2=0: zdatny G1=1, G2=0, G3=0, G4=0; z usterką G1=0, G2=1, G3=1, G4=XOR(1,1)=0 – wyjście takie samo, to nie jest test. Tabela podaje G2=1, a naprawdę G2 = ~D.
+- **Teraz (domyślne wybory):** po pobudzeniu implikacja daje G4=0, więc błąd nie dociera do wyjścia – SPRZECZNOŚĆ (pusta D-granica). W żadnej ścieżce decyzji nie ma testu, bo usterki nie da się wykryć.
 
 ### `blad-4-falszywa-sprzecznosc.json`
 
 G3 = XOR(G1, NOT(G1)) = 1 zawsze.
 
-- **Co pokazuje aplikacja:** G1 s-a-0, wybór „Propagacja błędu z G1. Wybierz drogę” → „Przez G4 (AND)”: aplikacja zgłasza sprzeczność na G3=1; w pozostałych drogach też nie znajduje testu.
+- **Wersja 1.1.0 pokazywała:** G1 s-a-0, wybór „Propagacja błędu z G1. Wybierz drogę” → „Przez G4 (AND)”: aplikacja zgłasza sprzeczność na G3=1; w pozostałych drogach też nie znajduje testu.
 - **Prawda (do policzenia na kartce):** Dla X1=1, X2=1: zdatny G1=1, G3=1, G4=1; z usterką G1=0, G3=1, G4=0 – to jest test. G3=1 da się uzyskać (D XOR ~D = 1), więc sprzeczności nie ma.
+- **Teraz (domyślne wybory):** implikacja daje od razu G2=~D, G3=1, G4=D – błąd jest na wyjściu, TEST X1=1, X2=1.
 
 ### `blad-5-wiersz-po-sprzecznosci.json`
 
 Pobudzenie G1 s-a-0 wymaga X1=0, a ten sam sygnał blokuje propagację przez G2.
 
-- **Co pokazuje aplikacja:** G1 s-a-0: sprzeczność jest prawdziwa (usterki nie da się wykryć), ale po niej tabela pokazuje jeszcze wiersz „Stan po propagacji (Podsumowanie)”.
+- **Wersja 1.1.0 pokazywała:** G1 s-a-0: sprzeczność jest prawdziwa (usterki nie da się wykryć), ale po niej tabela pokazuje jeszcze wiersz „Stan po propagacji (Podsumowanie)”.
 - **Prawda (do policzenia na kartce):** Po sprzeczności próba powinna się kończyć (materiały, str. 37: „Odrzuć błędny test. Cofnij się do najbliższego punktu decyzyjnego”).
+- **Teraz (domyślne wybory):** SPRZECZNOŚĆ (pusta D-granica) kończy próbę, bez wiersza podsumowania.
 
 ## 2. Przykład z materiałów (str. 41)
 
@@ -72,7 +77,7 @@ Wejścia w kolejności X1X2X3X4X5X6, wyjścia: G7, G9. Wzorzec z `x` oznacza wsz
 | G9 s-a-0 | `x0x0xx`, `xxxxx1` |
 | G9 s-a-1 | `x1xxx0`, `xxx1x0` |
 
-Obecna aplikacja daje poprawne tabele dla wszystkich usterek tego układu.
+Aplikacja daje poprawne tabele dla wszystkich usterek tego układu (sprawdzone wszystkie ścieżki decyzji).
 
 ## 3. Losowe układy bez rekonwergencji (aplikacja powinna być bezbłędna)
 
@@ -175,7 +180,7 @@ Wejścia w kolejności X1X2X3X4, wyjścia: G12, G14, G9. Wzorzec z `x` oznacza w
 | G9 s-a-0 | `011x`, `101x` |
 | G9 s-a-1 | `00xx`, `11xx`, `xx0x` |
 
-## 4. Losowe układy z rekonwergencją (tu obecna aplikacja się myli)
+## 4. Losowe układy z rekonwergencją (tu myliła się wersja 1.1.0)
 
 ### `losowy-zbiezny-1.json`
 
@@ -194,12 +199,7 @@ Wejścia w kolejności X1X2X3, wyjścia: G10. Wzorzec z `x` oznacza wszystkie we
 | G8 s-a-0 | `000` |
 | G8 s-a-1 | `1xx`, `x1x`, `xx1` |
 
-Co pokazuje obecna aplikacja (pierwszy błędny przypadek dla każdej usterki):
-
-- **G4 s-a-0** (wybory: „Propagacja błędu z G5. Wybierz drogę:” → „Przez G10 (XNOR)”): aplikacja pokazuje TEST X1X2X3 = 10x – wektor {'X1': 1, 'X2': 0, 'X3': 0} nie wykrywa usterki
-- **G4 s-a-1** (wybory: „Propagacja błędu z G5. Wybierz drogę:” → „Przez G10 (XNOR)”): aplikacja pokazuje TEST X1X2X3 = 000 – wektor {'X1': 0, 'X2': 0, 'X3': 0} nie wykrywa usterki
-- **G5 s-a-0** (wybory: „Propagacja błędu z G5. Wybierz drogę:” → „Przez G10 (XNOR)”): aplikacja pokazuje TEST X1X2X3 = 000 – wektor {'X1': 0, 'X2': 0, 'X3': 0} nie wykrywa usterki
-- **G5 s-a-1** (wybory: „Propagacja błędu z G5. Wybierz drogę:” → „Przez G10 (XNOR)”): aplikacja pokazuje TEST X1X2X3 = 010 – wektor {'X1': 0, 'X2': 1, 'X3': 0} nie wykrywa usterki
+Aplikacja daje poprawne tabele dla wszystkich usterek tego układu (sprawdzone wszystkie ścieżki decyzji).
 
 ### `losowy-zbiezny-2.json`
 
@@ -220,9 +220,7 @@ Wejścia w kolejności X1X2X3, wyjścia: G12, G6. Wzorzec z `x` oznacza wszystki
 | G9 s-a-0 | `xx1` |
 | G9 s-a-1 | **brak – usterki nie da się wykryć** |
 
-Co pokazuje obecna aplikacja (pierwszy błędny przypadek dla każdej usterki):
-
-- **G9 s-a-1** (wybory: „Propagacja błędu z G9. Wybierz drogę:” → „Przez G12 (XOR)”): aplikacja pokazuje TEST X1X2X3 = 0x0 – wektor {'X1': 0, 'X2': 0, 'X3': 0} nie wykrywa usterki
+Aplikacja daje poprawne tabele dla wszystkich usterek tego układu (sprawdzone wszystkie ścieżki decyzji).
 
 ### `losowy-zbiezny-3.json`
 
@@ -245,9 +243,7 @@ Wejścia w kolejności X1X2X3, wyjścia: G12, G14. Wzorzec z `x` oznacza wszystk
 | G7 s-a-0 | `0x1`, `1x0` |
 | G7 s-a-1 | `0x0`, `1x1` |
 
-Co pokazuje obecna aplikacja (pierwszy błędny przypadek dla każdej usterki):
-
-- **G4 s-a-0** (wybory: „Propagacja błędu z G4. Wybierz drogę:” → „Przez G10 (AND)”): aplikacja pokazuje TEST X1X2X3 = 111 – dla wejść {'X1': 1, 'X2': 1, 'X3': 1} tabela podaje nieprawdziwe wartości {'G6': '0 (naprawdę D)', 'G14': '~D (naprawdę 1)', 'W13': '0 (naprawdę D)'}
+Aplikacja daje poprawne tabele dla wszystkich usterek tego układu (sprawdzone wszystkie ścieżki decyzji).
 
 ### `losowy-zbiezny-4.json`
 
@@ -272,15 +268,7 @@ Wejścia w kolejności X1X2X3, wyjścia: G14. Wzorzec z `x` oznacza wszystkie we
 | G9 s-a-0 | **brak – usterki nie da się wykryć** |
 | G9 s-a-1 | `11x`, `x11` |
 
-Co pokazuje obecna aplikacja (pierwszy błędny przypadek dla każdej usterki):
-
-- **G4 s-a-0** (wybory: „Propagacja błędu przez G5” → „X2=1 (wypuści ~D)”; „Propagacja błędu z G7. Wybierz drogę:” → „Przez G11 (XOR)”; „Propagacja błędu przez G11” → „G9=0 (wypuści D)”): aplikacja kończy sprzecznością – fałszywa blokada na G12 – przy obecnych przypisaniach błąd może przez nią przejść
-- **G4 s-a-1** (wybory: „Propagacja błędu przez G5” → „X2=1 (wypuści D)”; „Propagacja błędu z G7. Wybierz drogę:” → „Przez G11 (XOR)”; „Propagacja błędu przez G11” → „G9=0 (wypuści ~D)”): aplikacja kończy sprzecznością – fałszywa blokada na G12 – przy obecnych przypisaniach błąd może przez nią przejść
-- **G5 s-a-0** (wybory: „Propagacja błędu z G7. Wybierz drogę:” → „Przez G11 (XOR)”): aplikacja kończy sprzecznością – fałszywa blokada na G12 – przy obecnych przypisaniach błąd może przez nią przejść
-- **G5 s-a-1** (wybory: „Pobudzenie błędu: G5 na 0” → „X2=1, G4=1”; „Propagacja błędu z G7. Wybierz drogę:” → „Przez G11 (XOR)”; „Propagacja błędu przez G11” → „G9=0 (wypuści D)”): aplikacja kończy sprzecznością – fałszywa blokada na G12 – przy obecnych przypisaniach błąd może przez nią przejść
-- **G7 s-a-0** (wybory: „Pobudzenie błędu: G7 na 1” → „G5=0, X2=1”; „Propagacja błędu z G7. Wybierz drogę:” → „Przez G11 (XOR)”; „Propagacja błędu przez G11” → „G9=0 (wypuści D)”): aplikacja kończy sprzecznością – fałszywa blokada na G12 – przy obecnych przypisaniach błąd może przez nią przejść
-- **G7 s-a-1** (wybory: „Pobudzenie błędu: G7 na 0” → „G5=1, X2=1”; „Propagacja błędu z G7. Wybierz drogę:” → „Przez G11 (XOR)”; „Propagacja błędu przez G11” → „G9=0 (wypuści ~D)”): aplikacja kończy sprzecznością – fałszywa blokada na G12 – przy obecnych przypisaniach błąd może przez nią przejść
-- **G8 s-a-0** (domyślne wybory): aplikacja kończy sprzecznością – fałszywa blokada na G14 – przy obecnych przypisaniach błąd może przez nią przejść
+Aplikacja daje poprawne tabele dla wszystkich usterek tego układu (sprawdzone wszystkie ścieżki decyzji).
 
 ### `losowy-zbiezny-5.json`
 
@@ -301,13 +289,8 @@ Wejścia w kolejności X1X2X3X4, wyjścia: G10, G12. Wzorzec z `x` oznacza wszys
 | G9 s-a-0 | `x1xx` |
 | G9 s-a-1 | `x0xx` |
 
-Co pokazuje obecna aplikacja (pierwszy błędny przypadek dla każdej usterki):
-
-- **G5 s-a-0** (wybory: „Propagacja błędu przez G6” → „X2=1 (wypuści ~D)”; „Propagacja błędu z G6. Wybierz drogę:” → „Przez G12 (XNOR)”; „Propagacja błędu przez G12” → „G9=1 (wypuści ~D)”): aplikacja kończy sprzecznością – fałszywa sprzeczność na G9 – przypisania da się zrealizować
-- **G5 s-a-1** (wybory: „Propagacja błędu przez G6” → „X2=1 (wypuści D)”; „Propagacja błędu z G6. Wybierz drogę:” → „Przez G12 (XNOR)”; „Propagacja błędu przez G12” → „G9=1 (wypuści D)”): aplikacja kończy sprzecznością – fałszywa sprzeczność na G9 – przypisania da się zrealizować
-- **G6 s-a-0** (wybory: „Propagacja błędu z G6. Wybierz drogę:” → „Przez G12 (XNOR)”; „Propagacja błędu przez G12” → „G9=1 (wypuści D)”): aplikacja pokazuje TEST X1X2X3X4 = 000x – wektor {'X1': 0, 'X2': 0, 'X3': 0, 'X4': 0} nie wykrywa usterki
-- **G6 s-a-1** (wybory: „Propagacja błędu z G6. Wybierz drogę:” → „Przez G12 (XNOR)”): aplikacja pokazuje TEST X1X2X3X4 = 100x – wektor {'X1': 1, 'X2': 0, 'X3': 0, 'X4': 0} nie wykrywa usterki
+Aplikacja daje poprawne tabele dla wszystkich usterek tego układu (sprawdzone wszystkie ścieżki decyzji).
 
 ## 5. Układy z zajęć (program TESTER)
 
-W `tests/fixtures/tester/` jest 11 układów z TESTER-a w formacie aplikacji – też można je wczytać. Znane błędy obecnego silnika: `edytor-6` G11 s-a-0 (przykład ze str. 42 – wymaga propagacji dwiema ścieżkami naraz, jedyny test 0000), `tester-rosa` G8 s-a-0 (jedyny test X0..X3 = 0111), `edytor-x` (bramka G8 z oboma wejściami z węzła W10).
+W `tests/fixtures/tester/` jest 11 układów z TESTER-a w formacie aplikacji – też można je wczytać. Szczególnie ciekawe: `edytor-6` G11 s-a-0 (przykład ze str. 42 – jedyny test 0000 wymaga propagacji dwiema ścieżkami: wybierz kolejno obie bramki z D-granicy), `tester-rosa` G8 s-a-0 (jedyny test X0..X3 = 0111) i `edytor-x` (bramka G8 z oboma wejściami z węzła W10).
