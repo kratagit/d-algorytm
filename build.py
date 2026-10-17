@@ -5,12 +5,14 @@
 #   python build.py --skip-tests   -> jak wyżej, bez uruchamiania testów
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 
 import buduj_przyklady
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BUILD_DIR = os.path.join(BASE_DIR, 'build')
 DIST_DIR = os.path.join(BASE_DIR, 'dist')
 EXE_NAME = 'DIANA.exe'
 
@@ -40,11 +42,13 @@ def build(skip_tests=False):
         '--include-data-dir=web=web',                 # cały interfejs webowy wewnątrz .exe
         '--include-module=bottle_websocket',          # moduły sieciowe Eel, które Nuitka potrafi pominąć
         '--include-module=geventwebsocket',
-        f'--output-dir={DIST_DIR}',
-        f'--output-filename={EXE_NAME}',
-        '--remove-output',                            # usuń katalogi pośrednie *.build / *.onefile-build
+        f'--output-dir={BUILD_DIR}',                  # pliki pośrednie; bez --remove-output, bo antywirus potrafi
+        f'--output-filename={EXE_NAME}',              # zablokować ich usuwanie i Nuitka przerywa wtedy build
         'main.py',
     ])
+    os.makedirs(DIST_DIR, exist_ok=True)
+    shutil.copy2(os.path.join(BUILD_DIR, EXE_NAME), os.path.join(DIST_DIR, EXE_NAME))
+    shutil.rmtree(BUILD_DIR, ignore_errors=True)    # co zablokowane, zostanie (build/ jest w .gitignore)
     print(f"Gotowe: {os.path.join(DIST_DIR, EXE_NAME)}")
 
 
