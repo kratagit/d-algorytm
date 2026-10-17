@@ -13,7 +13,7 @@ import eel
 import os
 from engine import DAlgorithmEngine
 
-# 1. Zabezpieczenie dla PyInstaller (na wypadek gdybyś kiedyś do niego wrócił)
+# 1. W .exe (PyInstaller) pliki aplikacji są rozpakowywane do sys._MEIPASS
 if hasattr(sys, '_MEIPASS'):
     base_path = sys._MEIPASS
 else:

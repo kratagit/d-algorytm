@@ -15,10 +15,10 @@ Język projektu: **polski** (UI, komunikaty silnika, komentarze w kodzie, README
 ## Stos i uruchamianie
 
 - Python 3.14 + [Eel](https://github.com/python-eel/Eel) (most WebSocket Python ↔ przeglądarka). Frontend: czysty HTML/CSS/JS + SVG, bez frameworków i bez bundlera.
-- Środowisko: `.venv` w katalogu projektu; `requirements.txt` – runtime (Eel), `requirements-dev.txt` – dodatkowo Nuitka i pytest. Python wołać jako `.venv/Scripts/python`.
+- Środowisko: `.venv` w katalogu projektu; `requirements.txt` – runtime (Eel), `requirements-dev.txt` – dodatkowo PyInstaller i pytest. Python wołać jako `.venv/Scripts/python`.
 - Uruchomienie: `python main.py` – otwiera okno Chrome / Edge (fallback: domyślna przeglądarka), port losowy (`port=0`).
-- Testy: `python -m pytest` (konfiguracja w `pyproject.toml`, ~600 testów, ok. 1 min).
-- Build: `python build.py` → regeneracja `web/examples.js`, testy, Nuitka → `dist/DIANA.exe`. Flagi Nuitki opisane w `build.py`.
+- Testy: `python -m pytest` (konfiguracja w `pyproject.toml`, ~600 testów, ok. 20 s).
+- Build: `python build.py` → regeneracja `web/examples.js`, testy, PyInstaller (`--onefile`, ok. 1 min) → `dist/DIANA.exe`. PyInstaller jest tymczasowy – docelowo Electron.
 - CI (`.github/workflows/`): `ci.yml` – pytest przy każdym pushu na `main` i pull requeście; `release.yml` – merge PR na `main` z etykietą `patch`/`minor`/`major` → testy, build na `windows-latest` i GitHub Release `vX.Y.Z` z plikiem `diana-X.Y.Z-windows-x64.exe`. Wersja istnieje **tylko jako tag** (ostatni tag podbity wg etykiety, start `v1.0.0`) – w kodzie nie ma pliku z wersją; nie tworzyć tagów ręcznie. PR bez etykiety nie tworzy wydania.
 - Podgląd samego frontendu bez backendu: konfiguracja `web-static` w `.claude/launch.json` (serwer statyczny na `web/`; `eel` wtedy nie istnieje).
 
@@ -27,7 +27,7 @@ Język projektu: **polski** (UI, komunikaty silnika, komentarze w kodzie, README
 | Plik | Rola |
 |---|---|
 | `main.py` | Punkt wejścia: globalny `excepthook` (MessageBox Windows przez `ctypes` – działa tylko na Windows), `eel.init('web')`, eksponuje `run_d_algorithm(components, target_node, fault_type, user_choices)`, wybór przeglądarki. |
-| `build.py` | Budowanie `.exe` (Nuitka). |
+| `build.py` | Budowanie `.exe` (PyInstaller). |
 | `tests/` | pytest – opis niżej w „Testy”. |
 | `engine.py` | Klasa `DAlgorithmEngine` – cała logika algorytmu. Bez zależności zewnętrznych, można ją testować w izolacji. |
 | `web/index.html` | Cały frontend w jednym pliku (CSS + JS inline, ~940 linii): edytor schematów, zoom/pan, kable z załamaniami, tabela wyników, panel alternatywnych decyzji, autosave do `localStorage` (`d_algo_save`). |
@@ -52,27 +52,26 @@ Układ to słownik `comps` (`id → komponent`):
 
 ## Jak działa silnik (`engine.py`)
 
-Stan to wartość każdej linii; wartości nigdy się nie zmieniają (tylko `x` → wartość). Po każdym przypisaniu `imply` wykonuje **implikację w przód w D-algebrze** (`d_eval`: para układ zdatny / z usterką, `x` = dowolna z 0, 1, D, ~D) – wartości wynikające z ustalonych linii trafiają do tego samego wiersza tabeli z dopiskiem „Implikacja: …”, a niezgodność z już ustaloną wartością to „SPRZECZNOŚĆ”.
+Tabela ma być **prosta dla studenta**: każdy wiersz to jeden krok metody (pobudzenie, propagacja przez bramkę, badanie zgodności) i pokazuje wartości ustalone w tym kroku – bez żadnych dodatkowych „implikacji” ani dopisków. Przykłady z materiałów nie muszą być odtwarzane 1:1 (str. 41 ma 3-wejściowy OR, którego interfejs nie ma). Wartości nigdy się nie zmieniają (tylko `x` → wartość). Zgodność sprawdzana jest w D-algebrze (`d_eval`: para układ zdatny / z usterką, `x` = dowolna z 0, 1, D, ~D).
 
-1. **Pobudzenie** – na `target_node` wpisywane `D` (sa0) lub `~D` (sa1); wejścia bramki z `requirement_options` (pierwotne D-sześciany, Tabela 3 materiałów) tak, by w układzie zdatnym wyjście wynosiło `1`/`0`.
-2. **Propagacja z D-granicy** – D-granica to bramki z D/~D na wejściu i nieustalonym wyjściem. Użytkownik wybiera bramkę (`branch_<bramki D-granicy>`); pozostałe wejścia dostają wartość nie-kontrolującą (AND/NAND 1, OR/NOR 0, XOR/XNOR wybór `prop_<bramka>`), wyjście liczy implikacja. Kilka ścieżek naraz (materiały str. 42) = wybieranie kolejnych bramek z D-granicy; zbieżne gałęzie błędu (np. D AND D = D) rozstrzyga implikacja. Pusta D-granica bez D na wyjściu → „SPRZECZNOŚĆ … pusta D-granica”.
-3. **Badanie zgodności** – dla każdej ustalonej linii (od końca `cols`), której wartość nie wynika jeszcze z wejść, `requirement_options` podaje minimalne przypisania nieustalonych wejść (dla 0/1 = pierwotne sześciany, Tabela 5; linia w zasięgu błędu może też dostać D/~D, np. XOR(D, ~D) = 1). Brak opcji → „SPRZECZNOŚĆ … Funkcja logiczna bramki wyklucza taki wynik”.
+1. **Pobudzenie** – na `target_node` wpisywane `D` (sa0) lub `~D` (sa1); wejścia bramki z `requirement_options` (pierwotne D-sześciany, Tabela 3).
+2. **Propagacja** – dopóki błąd nie dotrze do wyjścia, użytkownik wybiera bramkę z D-granicy (bramki z D/~D na wejściu i nieustalonym wyjściem): decyzja `branch_<bramki>` „Propagacja błędu. Wybierz drogę:”, opcje „Przez G3 (NOR)”. Najpierw (domyślnie) bramki zasilane przez ostatnią bramkę, przez którą przeszedł błąd, potem pozostałe wg numerów. Pozostałe wejścia dostają wartość nie-kontrolującą (AND/NAND 1, OR/NOR 0, XOR/XNOR wybór `prop_<bramka>`), wyjście z D-algebry; wejście z D z innej gałęzi zostaje (D AND D = D). Kilka ścieżek naraz (str. 42) = wybieranie kolejnych bramek z D-granicy przed dojściem do wyjścia. Wyjście bez D → „SPRZECZNOŚĆ (Blokada propagacji)”, pusta D-granica → „SPRZECZNOŚĆ … pusta D-granica”. Każda bramka ma wiersz „Propagacja błędu przez …” z wartościami jej pozostałych wejść, a zaraz po pobudzeniu `insert_path_row` wstawia wiersz „Wybór ścieżki propagacji (…)” z wybranymi bramkami po kolei (przy blokadzie także z bramką, na której błąd utknął).
+3. **Badanie zgodności** – od wyjść w głąb (DFS po wejściach), potem pozostałe ustalone linie. Wiersz dla każdej bramki z ustaloną wartością 0/1 (także takiej, której wartość już wynika z wejść) oraz dla linii z D/~D, której wartość nie wynika z wejść; wiersz pokazuje wszystkie wejścia bramki, a „Wymagane:” – wejścia, od których zależy wartość (`needed_inputs`). Opcje z `requirement_options` (dla 0/1 = pierwotne sześciany, Tabela 5; linia w zasięgu błędu może dostać D/~D, np. XOR(D, ~D) = 1). Brak opcji → „SPRZECZNOŚĆ … Funkcja logiczna bramki wyklucza taki wynik”.
 
 Ważne szczegóły:
 - **Nawracanie wybiera użytkownik.** Każdy wybór z >1 opcją trafia do `decision_log` (`excite_*`, `branch_*`, `prop_*`, `just_*`); wybór pochodzi z `user_choices` (domyślnie 0). Po sprzeczności próba się kończy (bez wiersza podsumowania).
-- `resolve_name` przechodzi przez łańcuch `NODE` do źródła – wymaganie na węźle dotyczy źródła; dwa wejścia z tej samej linii dostają tę samą wartość. `assign_state` propaguje wartość w górę i w dół przez węzły i zwraca `True` przy konflikcie.
-- `prepare()` ustala kolumny, kolejność topologiczną bramek (`gates`), wyjścia (linie, których nic nie czyta) i zasięg błędu (`cone`).
+- `resolve_name` przechodzi przez łańcuch `NODE` do źródła – wymaganie na węźle dotyczy źródła; dwa wejścia z tej samej linii dostają tę samą wartość. `assign_state` propaguje wartość w górę i w dół przez węzły.
+- `prepare()` ustala kolumny, kolejność topologiczną bramek (`gates`), odbiorców linii (`consumers`), wyjścia (linie, których nic nie czyta) i zasięg błędu (`cone`).
 - Kolejność kolumn: `IN` → bramki → `NODE`, w obrębie grupy wg cyfr w nazwie (`sort_key`) – nazwy bez cyfr dostają 0.
 - Komunikaty kroków są po polsku i trafiają bezpośrednio do tabeli w UI (renderowane jako HTML).
 
 ## Testy
 
 - `tests/oracle.py` – **niezależna wyrocznia** (nie importuje silnika): symulacja 0/1 i w D-algebrze dla bramek o dowolnej liczbie wejść, `Oracle` (wszystkie wektory wejściowe z wartościami linii dla jednej usterki; `realizable(stan)` mówi, czy przypisania z tabeli da się zrealizować).
-- `tests/helpers.py` – uruchamianie silnika, `explore` (przejście całego drzewa decyzji; przekroczenie limitu przebiegów to błąd testu, a nie ciche pominięcie), `check_run`/`check_fault` (zasady poprawnej tabeli z kategoriami naruszeń: `struktura`, `test`, `sprzecznosc`, `kompletnosc`, `opcje`), `KNOWN_BUGS` + `known_bug(...)` (oznaczenie `xfail(strict=True)` dla znanych rozbieżności).
+- `tests/helpers.py` – uruchamianie silnika, `explore` (przejście całego drzewa decyzji; przekroczenie limitu przebiegów to błąd testu, a nie ciche pominięcie), `check_run`/`check_fault` (zasady poprawnej tabeli z kategoriami naruszeń: `struktura`, `test`, `sprzecznosc`, `kompletnosc`, `opcje`).
 - `test_examples.py` – przykłady aplikacji, układy z zajęć (`tests/fixtures/tester/*.json`, z `konwertuj_gat.py`) i układ ze str. 41 w wersji 2-wejściowej; pilnuje też, by klucz odpowiedzi w `tests/fixtures/do-sprawdzenia/README.md` zgadzał się z wyrocznią. `test_materials.py` – tabele 2–5 i przykłady z `Materiały.pdf` (`tests/fixtures/materialy/uklad-g1-g9.json` – układ ze str. 33/41 z 3-wejściowym OR). `test_random.py` – 2×150 losowych układów (`random_circuits.py`, 2–5 wejść, 3–10 bramek, rozgałęzienie zawsze przez jeden węzeł). `test_engine.py` – scenariusze i minimalne układy błędów wersji 1.1.0 (`tests/fixtures/do-sprawdzenia/blad-*.json`). `test_gates.py` – funkcje bramek.
 - `tests/fixtures/do-sprawdzenia/` – układy do ręcznego sprawdzania w aplikacji (Plik → Wczytaj układ) z kluczem odpowiedzi w `README.md` (wszystkie testy każdej usterki wg wyroczni, zapis wzorcami z x).
-- Po usunięciu rozbieżności z `KNOWN_BUGS` pytest zgłosi XPASS – wtedy zdejmij oznaczenie `known_bug`.
-- Jedyna znana rozbieżność: forma tabeli różni się od materiałów (str. 41) – brak wiersza „Wybór ścieżki propagacji”, wartości z implikacji pojawiają się wcześniej, inna kolejność badania zgodności (test `test_tabela_dalgorytmu_str41`). Błędy wersji 1.1.0 (fałszywe testy i sprzeczności przy rekonwergencji, propagacja jedną ścieżką, wspólne źródło wejść bramki, podsumowanie po sprzeczności) są naprawione.
+- `test_materials.py::test_dalgorytm_str41_znajduje_test_z_materialow` – silnik znajduje test ze str. 41 (bez porównywania tabeli wiersz w wiersz). Błędy wersji 1.1.0 (fałszywe testy i sprzeczności przy rekonwergencji, propagacja jedną ścieżką, wspólne źródło wejść bramki, podsumowanie po sprzeczności) są naprawione.
 
 ## Materiały źródłowe (poza repozytorium)
 

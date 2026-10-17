@@ -1,6 +1,6 @@
 # DIANA – interaktywny system diagnostyki i analizy układów cyfrowych
 
-**DIANA** (*DIagnostyka i ANAliza układów cyfrowych*) to narzędzie edukacyjno-inżynierskie pozwalające na projektowanie układów logicznych i automatyczne generowanie wektorów testowych (ATPG) dla pojedynczych usterek typu *stuck-at* (s-a-0, s-a-1). Projekt implementuje klasyczny D-Algorytm (pobudzenie, propagacja z D-granicy, badanie zgodności) z implikacją w D-algebrze po każdym kroku, wyborem alternatywnych decyzji przez użytkownika oraz szczegółowym, krokowym wyjaśnianiem podejmowanych akcji.
+**DIANA** (*DIagnostyka i ANAliza układów cyfrowych*) to narzędzie edukacyjno-inżynierskie pozwalające na projektowanie układów logicznych i automatyczne generowanie wektorów testowych (ATPG) dla pojedynczych usterek typu *stuck-at* (s-a-0, s-a-1). Projekt implementuje klasyczny D-Algorytm (pobudzenie, propagacja, badanie zgodności) z wyborem alternatywnych decyzji przez użytkownika i tabelą krok po kroku.
 
 Rozwiązanie to łączy wydajność obliczeniową Pythona z nowoczesnym, w pełni interaktywnym, sprzętowo akcelerowanym interfejsem stworzonym w technologiach webowych (Vanilla JS / SVG).
 
@@ -30,9 +30,8 @@ Jądro aplikacji stanowi klasa `DAlgorithmEngine`, odpowiedzialna za trawienie u
 * **Topologia i Reprezentacja Sieci:** Słownik komponentów przesłany z przeglądarki jest wstępnie filtrowany w celu rozdzielenia fizycznych bramek od węzłów (`NODE`). Węzły (kropki dystrybucyjne) służą jedynie do graficznego przekazywania sygnałów – algorytm wykorzystuje rekursywną funkcję `resolve_name`, która automatycznie "idzie po kablu" przez węzły tak długo, aż odnajdzie fizyczną bramkę, ignorując sztuczne komponenty graficzne przy liczeniu wymagań bramek.
 * **Trójfazowy Silnik Decyzyjny:**
   1. **Pobudzenie błędu:** Wymuszenie stanu `1` (dla uszkodzenia `s-a-0`) lub `0` (dla uszkodzenia `s-a-1`) w węźle testowanym i zadeklarowanie wprowadzenia sygnału `D` lub `~D`.
-  2. **Propagacja błędu:** Wytyczanie "uczulonych" ścieżek aż do wyjść obserwowalnych. Użytkownik wybiera kolejne bramki z D-granicy (bramek z błędem na wejściu i nieustalonym wyjściem), pozostałe wejścia bramki dostają wartości nie-kontrolujące (np. 1 dla AND, 0 dla OR). Wybierając kolejno kilka bramek, można prowadzić błąd kilkoma ścieżkami jednocześnie.
+  2. **Propagacja błędu:** Użytkownik wybiera kolejne bramki, przez które przechodzi błąd („Wybierz drogę”), aż błąd dotrze do wyjścia (można też poprowadzić go kilkoma ścieżkami naraz) – pozostałe wejścia każdej bramki dostają wartości nie-kontrolujące (np. 1 dla AND, 0 dla OR). Każda bramka ma w tabeli własny wiersz, a wiersz „Wybór ścieżki propagacji” podsumowuje wybraną drogę.
   3. **Badanie Zgodności Stanów (Cofanie/Justification):** Wsteczne przepychanie potrzebnych stanów logicznych w stronę wejść fizycznych (X0, X1...). 
-* **Implikacja w D-algebrze:** Po każdym kroku silnik wylicza wartości wynikające z już ustalonych linii (np. NOT(D) = ~D, D AND D = D, XOR(D, ~D) = 1) i pokazuje je w tym samym wierszu tabeli. Dzięki temu tabela jest zawsze zgodna z rzeczywistym działaniem układu, także gdy ścieżki błędu się rozchodzą i ponownie spotykają.
 * **Drzewo Decyzyjne (Backtracking):** Ze względu na to, że układ logiczny może wymagać kilku wejść, by osiągnąć pożądany stan (np. na wyjściu bramki OR stan '1' można uzyskać na trzy sposoby: `1-0`, `0-1`, `1-1`), silnik używa logiki decyzyjnej. Wykrywa sytuacje wieloznaczne i zatrzymuje się, przerzucając na Front-end obiekt `decision_log`. Następnie czeka na interakcję ze strony użytkownika (wybór z rozwijanej listy).
 * **Wykrywanie Sprzeczności:** Gdy wymagany na bramce sygnał łamie jej zasady (fizykę logiczną) dla narzuconego wcześniej punktu pracy układu, algorytm zwraca tzw. błąd, a w tabeli zjawia się stosowny, sformalizowany komentarz (wraz z wstrzykiwanym tagiem `ERR` by UI nałożyło czerwoną ikonę `❌`).
 
@@ -63,16 +62,14 @@ Każda tabela wygenerowana przez silnik jest sprawdzana **niezależną wyroczni�
 * 300 losowych układów wielkości jak na zajęciach (2–5 wejść, 3–10 bramek) – z rekonwergencją i bez,
 * tabel D-algebry i D-sześcianów oraz rozwiązanych przykładów z materiałów do zajęć (`tests/test_materials.py`).
 
-Znane rozbieżności silnika są opisane w `tests/helpers.py` (`KNOWN_BUGS`), a testy, które je wykrywają, są oznaczone jako oczekiwane porażki (`xfail`).
-
 Układy do ręcznego sprawdzania w aplikacji (Plik → Wczytaj układ) wraz z kluczem odpowiedzi są w `tests/fixtures/do-sprawdzenia/`. Na GitHubie testy uruchamia workflow `CI` przy każdym pushu i pull requeście.
 
-### Budowanie `.exe` (Nuitka)
+### Budowanie `.exe` (PyInstaller)
 ```bash
 python build.py               # przykłady -> testy -> dist/DIANA.exe
 python build.py --skip-tests  # bez testów
 ```
-Skrypt regeneruje `web/examples.js`, uruchamia testy i kompiluje `main.py` Nuitką do jednego pliku bez okna konsoli (z wbudowanym folderem `web/` i modułami sieciowymi Eel). Przy pierwszym buildzie Nuitka pobiera do swojego cache Dependency Walker oraz – jeśli nie ma Visual Studio (MSVC) – kompilator C.
+Skrypt regeneruje `web/examples.js`, uruchamia testy i pakuje `main.py` PyInstallerem do jednego pliku bez okna konsoli (z wbudowanym folderem `web/`; pliki Eel dołącza hook PyInstallera). Budowanie trwa ok. minuty.
 
 ### Wydania (GitHub Releases)
 Wydanie powstaje po merge'u PR na `main` oznaczonego etykietą `patch`, `minor` lub `major`. Workflow `Release` uruchamia testy, buduje `.exe` na Windows i publikuje release z plikiem `diana-<wersja>-windows-x64.exe`. Wersja jest wyliczana automatycznie z ostatniego tagu `vX.Y.Z` (pierwsze wydanie: `v1.0.0`) i nie jest zapisana w kodzie:

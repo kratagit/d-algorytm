@@ -4,12 +4,11 @@ Część testów sprawdza silnik, a część samą wyrocznię testów i przepisa
 porównując je z kilkoma niezależnymi wynikami z materiałów.
 """
 import itertools
-import re
 
 import pytest
 
 from engine import DAlgorithmEngine
-from helpers import circuit, explore, fixtures, known_bug, load_circuit
+from helpers import circuit, explore, final_state, fixtures, load_circuit
 from oracle import Oracle, d_gate, d_simulate
 
 EXAMPLE = load_circuit(fixtures('materialy')['uklad-g1-g9'])
@@ -156,24 +155,11 @@ def test_przyklad_str42_jeden_test():
     assert Oracle(comps, 'G11', 0).tests() == [{'X0': 0, 'X1': 0, 'X2': 0, 'X3': 0}]
 
 
-# --- Tabela D-algorytmu z materiałów (str. 41) jako wzorzec dla silnika ---
+# --- D-algorytm na układzie z materiałów (str. 41) ---
 
-STAGES = [('Stan początkowy', 'start'), ('Pobudzenie', 'pobudzenie'), ('Propagacja', 'propagacja'),
-          ('Stan po propagacji', 'stan_koncowy'), ('Badanie zgodności', 'zgodnosc'), ('TEST', 'test')]
-
-
-def _normalize(step, columns):
-    stage = next((name for prefix, name in STAGES if step['msg'].startswith(prefix)), None)
-    values = step['s'] if step['full'] else step['delta']
-    row = {'etap': stage, 'wartosci': {k: values[k] for k in columns if k in values}}
-    gate = re.search(r'(?:przez|na) (\w+)', step['msg'])
-    if stage in ('propagacja', 'zgodnosc') and gate: row['bramka'] = gate.group(1)
-    return row
-
-
-@known_bug('format_tabeli')
-def test_tabela_dalgorytmu_str41():
-    data = EXAMPLE['dalgorytm_str41']
-    expected = [{k: v for k, v in row.items() if k != 'sciezka'} for row in data['tabela']]
-    tables = [[_normalize(s, data['kolumny']) for s in res['steps']] for _, res in explore(COMPS, 'G2', 'sa1')[0]]
-    assert expected in tables
+def test_dalgorytm_str41_znajduje_test_z_materialow():
+    """Silnik wyznacza ten sam test co tabela ze str. 41 (x,1,1,1,0,x)."""
+    expected = {k: v for k, v in EXAMPLE['dalgorytm_str41']['tabela'][-1]['wartosci'].items() if k.startswith('X')}
+    tests = [{k: v for k, v in final_state(res).items() if k.startswith('X')}
+             for _, res in explore(COMPS, 'G2', 'sa1')[0] if final_state(res)]
+    assert expected in tests
