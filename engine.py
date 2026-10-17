@@ -41,6 +41,7 @@ class DAlgorithmEngine:
         self.steps = []
         self.cols = []
         self.implied = []
+        self.d_order = []  # bramki w kolejności, w jakiej docierał do nich błąd
 
     def resolve_name(self, cid):
         c = self.components.get(cid)
@@ -110,6 +111,7 @@ class DAlgorithmEngine:
                 if cur != 'x' or self.assign_state(cid, val, delta):
                     return f"SPRZECZNOŚĆ na {cid}! Wymagane {cid}={cur}, a z wartości wejść wynika {cid}={val}."
                 self.implied.append(cid)
+                if val in D_VALUES: self.d_order.append(cid)
                 changed = True
         return None
 
@@ -120,14 +122,28 @@ class DAlgorithmEngine:
         self.decision_log.append({'id': dec_id, 'title': title, 'options': options, 'selected': selected})
         return selected
 
-    def add_step(self, msg, delta=None, full=False):
-        if self.implied and not full:
-            msg += " Implikacja: " + ", ".join(f"{g}={self.algo_state[g]}" for g in self.implied) + "."
+    def add_step(self, msg, delta=None, full=False, split=True):
+        """Dodaje wiersz tabeli. Bramka, przez którą błąd przeszedł sam (z implikacji), dostaje osobny wiersz
+        „Propagacja błędu przez …”; pozostałe wartości z implikacji trafiają do dopisku „Implikacja: …” w wierszu
+        kroku, z którego wynikają (kolejność jak przy wyliczaniu)."""
+        delta = dict(delta or {})
+        rows = [[msg, delta, []]]  # [komentarz, zmiany, wartości z implikacji]
+        for g in ([] if full else self.implied):
+            moved = {k: delta.pop(k) for k in list(delta) if self.resolve_name(k) == g}
+            if split and self.algo_state[g] in D_VALUES:
+                inputs = ", ".join(f"{self.resolve_name(i)}={self.algo_state[i]}" for i in self.pins(g) if i)
+                rows.append([f"Propagacja błędu przez {g} ({self.components[g]['type']}) – wynika z ustalonych wejść: {inputs}.",
+                             moved or {g: self.algo_state[g]}, []])
+            else:
+                rows[-1][1].update(moved)
+                rows[-1][2].append(g)
         self.implied = []
-        self.steps.append({'s': self.algo_state.copy(), 'delta': delta if delta is not None else {}, 'msg': msg, 'full': full})
+        for text, changes, implied in rows:
+            if implied: text += " Implikacja: " + ", ".join(f"{g}={self.algo_state[g]}" for g in implied) + "."
+            self.steps.append({'s': self.algo_state.copy(), 'delta': changes, 'msg': text, 'full': full})
 
     def conflict_step(self, msg, line, delta=None):
-        self.add_step(msg, delta={**(delta or {}), line: 'ERR'})
+        self.add_step(msg, delta={**(delta or {}), line: 'ERR'}, split=False)
 
     def insert_path_row(self, at, blocked=None):
         """Wiersz „Wybór ścieżki propagacji” zaraz po pobudzeniu (jak w materiałach, str. 41).
@@ -145,7 +161,7 @@ class DAlgorithmEngine:
                         stack.append(i)
         else:
             on_path = {g for g in self.gates if self.algo_state[g] in D_VALUES}
-        path = [g for g in self.gates if g in on_path and g != self.target_node]
+        path = [g for g in self.d_order if g in on_path]
         if blocked and blocked not in path: path.append(blocked)
         if path:
             self.steps.insert(at, {'s': dict(self.steps[at - 1]['s']), 'delta': {},
@@ -209,10 +225,10 @@ class DAlgorithmEngine:
         if conflict:
             self.conflict_step(conflict, self.target_node, delta)
             return self._get_result()
+        path_at = len(self.steps) + 1
         self.add_step(f"Pobudzenie błędu: {self.target_node}. Wymagane: {opts[idx]['label']}", delta=delta)
 
         # 2. Propagacja błędu z D-granicy (bramek z błędem na wejściu i nieustalonym wyjściem)
-        path_at = len(self.steps)
 
         def stop(msg, line, delta=None, blocked=None):
             self.conflict_step(msg, line, delta)

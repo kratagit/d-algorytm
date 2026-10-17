@@ -12,7 +12,7 @@ Błąd dochodzi do G3 dwiema gałęziami (bezpośrednio z W1 i przez G2).
 
 - **Wersja 1.1.0 pokazywała:** G1 s-a-0, domyślne wybory: aplikacja zgłasza „SPRZECZNOŚĆ (Blokada propagacji) na G3! Drugie wejście ma stan D”.
 - **Prawda (do policzenia na kartce):** Dla X1=1, X2=1, X3=0: zdatny G1=1, G2=1, G3=1; z usterką G1=0, G2=0, G3=0 – wyjście się różni, więc błąd przez G3 przechodzi (D AND D = D). Blokady nie ma.
-- **Teraz (domyślne wybory):** propagacja przez G2 (X3=0), a z implikacji G3 = D AND D = D – TEST X1=1, X2=1, X3=0.
+- **Teraz (domyślne wybory):** propagacja przez G2 (X3=0), a w następnym wierszu błąd przechodzi sam przez G3 (D AND D = D) – TEST X1=1, X2=1, X3=0.
 
 ### `blad-2-to-samo-zrodlo.json`
 
@@ -36,7 +36,7 @@ G3 = XOR(G1, NOT(G1)) = 1 zawsze.
 
 - **Wersja 1.1.0 pokazywała:** G1 s-a-0, wybór „Propagacja błędu z G1. Wybierz drogę” → „Przez G4 (AND)”: aplikacja zgłasza sprzeczność na G3=1; w pozostałych drogach też nie znajduje testu.
 - **Prawda (do policzenia na kartce):** Dla X1=1, X2=1: zdatny G1=1, G3=1, G4=1; z usterką G1=0, G3=1, G4=0 – to jest test. G3=1 da się uzyskać (D XOR ~D = 1), więc sprzeczności nie ma.
-- **Teraz (domyślne wybory):** implikacja daje od razu G2=~D, G3=1, G4=D – błąd jest na wyjściu, TEST X1=1, X2=1.
+- **Teraz (domyślne wybory):** po pobudzeniu błąd przechodzi sam przez G2 (G2=~D, z tego G3=1) i przez G4 (G4=D) – każde przejście ma swój wiersz; TEST X1=1, X2=1.
 
 ### `blad-5-wiersz-po-sprzecznosci.json`
 

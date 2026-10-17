@@ -157,8 +157,28 @@ def test_path_row_follows_chosen_branches():
 def test_path_row_of_failed_attempt_lists_reached_gates():
     comps = load_circuit(fixtures('do-sprawdzenia')['materialy-str41'])['components']
     steps = run_engine(comps, 'G2', 'sa1')['steps']  # domyślnie G6: D i ~D znoszą się na G7 = OR
-    assert steps[2]['msg'] == 'Wybór ścieżki propagacji (G3, G5, G6, G10)'
+    assert steps[2]['msg'] == 'Wybór ścieżki propagacji (G3, G5, G10, G6)'  # kolejność docierania błędu
     assert steps[-1]['msg'].startswith('SPRZECZNOŚĆ')
+
+
+def test_gate_passed_without_choice_gets_its_own_row():
+    # G10 = OR(G4, G5): G4 = 0 już ustalone, więc błąd z G5 przechodzi przez G10 bez wyboru – ale ma własny wiersz
+    comps = load_circuit(fixtures('do-sprawdzenia')['materialy-str41'])['components']
+    steps = run_engine(comps, 'G2', 'sa1', {'branch_G6_G7': 1})['steps']
+    msgs = [s['msg'] for s in steps]
+    g5 = next(n for n, m in enumerate(msgs) if m.startswith('Propagacja błędu przez G5'))
+    assert msgs[g5 + 1] == 'Propagacja błędu przez G10 (OR) – wynika z ustalonych wejść: G4=0, G5=D.'
+    assert steps[g5 + 1]['delta'] == {'G10': 'D'} and 'G10' not in steps[g5]['delta']
+    assert msgs[g5 + 2].startswith('Propagacja błędu przez G7')
+
+
+def test_implied_values_go_to_the_row_they_follow_from():
+    # G3 = XOR(G1, G2) = 1 wynika z G2 = NOT(G1) = ~D, więc dopisek jest w wierszu przejścia przez G2
+    data = load_circuit(fixtures('do-sprawdzenia')['blad-4-falszywa-sprzecznosc'])
+    msgs = [s['msg'] for s in run_engine(data['components'], 'G1', 'sa0')['steps']]
+    assert msgs[1] == 'Pobudzenie błędu: G1. Wymagane: X1=1, X2=1'
+    assert msgs[3] == 'Propagacja błędu przez G2 (NOT) – wynika z ustalonych wejść: G1=D. Implikacja: G3=1.'
+    assert msgs[4] == 'Propagacja błędu przez G4 (AND) – wynika z ustalonych wejść: G1=D, G3=1.'
 
 
 def test_no_path_row_when_fault_is_on_output():
