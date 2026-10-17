@@ -6,7 +6,7 @@ Wskazówki dla Claude Code przy pracy w tym repozytorium.
 
 **DIANA** (*DIagnostyka i ANAliza układów cyfrowych*) – narzędzie edukacyjne (część pracy magisterskiej) do rysowania układów kombinacyjnych i generowania wektorów testowych (ATPG) klasycznym D-Algorytmem dla pojedynczych usterek *stuck-at* (s-a-0 / s-a-1). Wynik to tabela krok po kroku (pobudzenie → propagacja → badanie zgodności) z komentarzami oraz lista punktów decyzyjnych, w których użytkownik może wybrać alternatywną ścieżkę.
 
-Nazwa aplikacji to **DIANA**; „D-Algorytm” oznacza wyłącznie sam algorytm (np. `DAlgorithmEngine`). Repozytorium na GitHubie nazywa się nadal `d-algorytm`.
+Nazwa aplikacji to **DIANA**; „D-Algorytm” oznacza wyłącznie sam algorytm (np. `DAlgorithmEngine`). Repozytorium na GitHubie: `kratagit/diana` (lokalny katalog nadal nazywa się `d-algorytm`).
 
 Kierunek rozwoju (temat pracy): drugi silnik **PODEM** z heurystykami SCOAP – koszty sterowalności `c0`, `c1` i obserwowalności `O` każdej linii – oraz porównanie wydajności D-Algorytmu i PODEM (np. liczba nawrotów w drzewie przeszukiwań) na topologiach ze ścieżkami zbieżnymi i redundancją; do tego zestaw ćwiczeń laboratoryjnych. **Obecnie zajmujemy się wyłącznie D-algorytmem** – PODEM i miary sterowalności/obserwowalności dopiero później.
 

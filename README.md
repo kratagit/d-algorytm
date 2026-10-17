@@ -4,7 +4,7 @@
 
 Rozwiązanie to łączy wydajność obliczeniową Pythona z nowoczesnym, w pełni interaktywnym, sprzętowo akcelerowanym interfejsem stworzonym w technologiach webowych (Vanilla JS / SVG).
 
-Gotowy plik `.exe` dla Windows: [najnowsze wydanie](https://github.com/kratagit/d-algorytm/releases/latest).
+Gotowy plik `.exe` dla Windows: [najnowsze wydanie](https://github.com/kratagit/diana/releases/latest).
 
 ---
 
