@@ -129,6 +129,28 @@ class DAlgorithmEngine:
     def conflict_step(self, msg, line, delta=None):
         self.add_step(msg, delta={**(delta or {}), line: 'ERR'})
 
+    def insert_path_row(self, at, blocked=None):
+        """Wiersz „Wybór ścieżki propagacji” zaraz po pobudzeniu (jak w materiałach, str. 41).
+
+        Ścieżka wynika z wyborów „Wybierz drogę” i z implikacji: bramki, przez które błąd dociera do wyjścia,
+        a przy nieudanej próbie – bramki, do których dotarł, i bramka, na której utknął.
+        """
+        on_path = {o for o in self.outputs if self.algo_state[o] in D_VALUES}
+        if on_path:
+            stack = list(on_path)
+            while stack:
+                for i in self.pins(stack.pop()):
+                    if i and i not in on_path and self.algo_state[i] in D_VALUES:
+                        on_path.add(i)
+                        stack.append(i)
+        else:
+            on_path = {g for g in self.gates if self.algo_state[g] in D_VALUES}
+        path = [g for g in self.gates if g in on_path and g != self.target_node]
+        if blocked and blocked not in path: path.append(blocked)
+        if path:
+            self.steps.insert(at, {'s': dict(self.steps[at - 1]['s']), 'delta': {},
+                                   'msg': f"Wybór ścieżki propagacji ({', '.join(path)})", 'full': False})
+
     def requirements_label(self, needed, empty):
         return ", ".join(f"{k}={v}" for k, v in needed.items()) or empty
 
@@ -190,13 +212,19 @@ class DAlgorithmEngine:
         self.add_step(f"Pobudzenie błędu: {self.target_node}. Wymagane: {opts[idx]['label']}", delta=delta)
 
         # 2. Propagacja błędu z D-granicy (bramek z błędem na wejściu i nieustalonym wyjściem)
+        path_at = len(self.steps)
+
+        def stop(msg, line, delta=None, blocked=None):
+            self.conflict_step(msg, line, delta)
+            self.insert_path_row(path_at, blocked)
+            return self._get_result()
+
         while not any(self.algo_state[o] in D_VALUES for o in self.outputs):
             frontier = [g for g in self.gates if g != self.target_node and self.algo_state[g] == 'x'
                         and any(i and self.algo_state[i] in D_VALUES for i in self.pins(g))]
             if not frontier:
-                self.conflict_step("SPRZECZNOŚĆ: błąd nie może dotrzeć do wyjścia – pusta D-granica "
-                                   "(żadna bramka nie ma błędu na wejściu i nieustalonego wyjścia).", self.target_node)
-                return self._get_result()
+                return stop("SPRZECZNOŚĆ: błąd nie może dotrzeć do wyjścia – pusta D-granica "
+                            "(żadna bramka nie ma błędu na wejściu i nieustalonego wyjścia).", self.target_node)
             # Kilka ścieżek naraz uzyskuje się, wybierając kolejno kolejne bramki z D-granicy.
             frontier.sort(key=self.sort_key)
             opts = [{'label': f"Przez {g} ({self.components[g]['type']})", 'data': g} for g in frontier]
@@ -204,16 +232,14 @@ class DAlgorithmEngine:
             g = opts[p_idx]['data']
             gtype, delta, needed = self.components[g]['type'], {}, {}
             if None in self.pins(g):
-                self.conflict_step(f"SPRZECZNOŚĆ (Blokada propagacji) na {g}! Wejście bramki nie jest podłączone.", g)
-                return self._get_result()
+                return stop(f"SPRZECZNOŚĆ (Blokada propagacji) na {g}! Wejście bramki nie jest podłączone.", g, blocked=g)
             for inp in self.pins(g):
                 s = self.algo_state[inp]
                 if s in D_VALUES: continue
                 if gtype in NON_CONTROLLING:
                     if s not in ('x', NON_CONTROLLING[gtype]):
-                        self.conflict_step(f"SPRZECZNOŚĆ (Blokada propagacji) na {g}! Wejście {self.resolve_name(inp)} ma stan '{s}', "
-                                           f"który blokuje przepuszczenie błędu.", g)
-                        return self._get_result()
+                        return stop(f"SPRZECZNOŚĆ (Blokada propagacji) na {g}! Wejście {self.resolve_name(inp)} ma stan '{s}', "
+                                    f"który blokuje przepuszczenie błędu.", g, blocked=g)
                     if s == 'x': needed[self.resolve_name(inp)] = NON_CONTROLLING[gtype]
                 elif gtype in ('XOR', 'XNOR') and s == 'x':
                     values = [self.algo_state[i] for i in self.pins(g)]
@@ -225,16 +251,15 @@ class DAlgorithmEngine:
                     needed[self.resolve_name(inp)] = side[s_idx]['data']
             conflict = self.apply(needed, delta)
             if conflict:
-                self.conflict_step(conflict, g, delta)
-                return self._get_result()
+                return stop(conflict, g, delta, blocked=g)
             if self.algo_state[g] not in D_VALUES:
-                self.conflict_step(f"SPRZECZNOŚĆ (Blokada propagacji) na {g}! Przy tych wartościach wejść błąd nie przechodzi "
-                                   f"({g}={self.algo_state[g]}).", g, delta)
-                return self._get_result()
+                return stop(f"SPRZECZNOŚĆ (Blokada propagacji) na {g}! Przy tych wartościach wejść błąd nie przechodzi "
+                            f"({g}={self.algo_state[g]}).", g, delta, blocked=g)
             delta.setdefault(g, self.algo_state[g])
             if g in self.implied: self.implied.remove(g)
             self.add_step(f"Propagacja błędu przez {g} ({gtype}). Wymagane: {self.requirements_label(needed, 'Brak')}", delta=delta)
 
+        self.insert_path_row(path_at)
         self.add_step("Stan po propagacji (Podsumowanie)", full=True)
 
         # 3. Badanie zgodności: każda ustalona wartość musi wynikać z wejść bramki

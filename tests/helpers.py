@@ -27,8 +27,8 @@ OPTIONS = 'opcje'              # wadliwa lista decyzji (powtórzone opcje, wybó
 # Znane rozbieżności obecnego silnika (engine.py). Testy, które je wykrywają, są oznaczone jako oczekiwane
 # porażki; gdy rozbieżność zostanie usunięta, pytest zgłosi XPASS i oznaczenie trzeba zdjąć.
 KNOWN_BUGS = {
-    'format_tabeli': 'tabela różni się formą od materiałów (str. 41): brak wiersza „Wybór ścieżki propagacji”, '
-                     'wartości z implikacji pojawiają się wcześniej, inna kolejność badania zgodności',
+    'format_tabeli': 'tabela różni się formą od materiałów (str. 41): wartości z implikacji pojawiają się wcześniej '
+                     '(np. G4=0 bez osobnego wiersza „Zgodność stanu na G4”), inna kolejność badania zgodności',
 }
 
 

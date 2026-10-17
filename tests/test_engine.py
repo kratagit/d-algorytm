@@ -141,3 +141,26 @@ def test_no_summary_after_propagation_conflict():
     steps = run_engine(data['components'], data['target'], data['fault_type'])['steps']
     conflict = next(n for n, s in enumerate(steps) if 'ERR' in s['delta'].values())
     assert conflict == len(steps) - 1, [s['msg'] for s in steps[conflict:]]
+
+
+# --- Wiersz „Wybór ścieżki propagacji” (jak w materiałach, str. 41) ---
+
+def test_path_row_follows_chosen_branches():
+    comps = load_circuit(fixtures('do-sprawdzenia')['materialy-str41'])['components']
+    steps = run_engine(comps, 'G2', 'sa1', {'branch_G6_G7': 1})['steps']
+    assert steps[1]['msg'].startswith('Pobudzenie')
+    # G10 – druga bramka 3-wejściowego OR z materiałów; błąd przechodzi przez nią z implikacji
+    assert steps[2]['msg'] == 'Wybór ścieżki propagacji (G3, G5, G10, G7)'
+    assert steps[2]['delta'] == {} and steps[2]['s'] == steps[1]['s']
+
+
+def test_path_row_of_failed_attempt_lists_reached_gates():
+    comps = load_circuit(fixtures('do-sprawdzenia')['materialy-str41'])['components']
+    steps = run_engine(comps, 'G2', 'sa1')['steps']  # domyślnie G6: D i ~D znoszą się na G7 = OR
+    assert steps[2]['msg'] == 'Wybór ścieżki propagacji (G3, G5, G6, G10)'
+    assert steps[-1]['msg'].startswith('SPRZECZNOŚĆ')
+
+
+def test_no_path_row_when_fault_is_on_output():
+    steps = run_engine(circuit(X1='IN', X2='IN', G1=('AND', 'X1', 'X2')), 'G1', 'sa0')['steps']
+    assert not any(s['msg'].startswith('Wybór ścieżki') for s in steps)

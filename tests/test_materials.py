@@ -158,7 +158,7 @@ def test_przyklad_str42_jeden_test():
 
 # --- Tabela D-algorytmu z materiałów (str. 41) jako wzorzec dla silnika ---
 
-STAGES = [('Stan początkowy', 'start'), ('Pobudzenie', 'pobudzenie'), ('Propagacja', 'propagacja'),
+STAGES = [('Stan początkowy', 'start'), ('Pobudzenie', 'pobudzenie'), ('Wybór ścieżki', 'wybor_sciezki'), ('Propagacja', 'propagacja'),
           ('Stan po propagacji', 'stan_koncowy'), ('Badanie zgodności', 'zgodnosc'), ('TEST', 'test')]
 
 
