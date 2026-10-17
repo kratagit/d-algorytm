@@ -15,10 +15,10 @@ Język projektu: **polski** (UI, komunikaty silnika, komentarze w kodzie, README
 ## Stos i uruchamianie
 
 - Python 3.14 + [Eel](https://github.com/python-eel/Eel) (most WebSocket Python ↔ przeglądarka). Frontend: czysty HTML/CSS/JS + SVG, bez frameworków i bez bundlera.
-- Środowisko: `.venv` w katalogu projektu; `requirements.txt` – runtime (Eel), `requirements-dev.txt` – dodatkowo Nuitka i pytest. Python wołać jako `.venv/Scripts/python`.
+- Środowisko: `.venv` w katalogu projektu; `requirements.txt` – runtime (Eel), `requirements-dev.txt` – dodatkowo PyInstaller i pytest. Python wołać jako `.venv/Scripts/python`.
 - Uruchomienie: `python main.py` – otwiera okno Chrome / Edge (fallback: domyślna przeglądarka), port losowy (`port=0`).
 - Testy: `python -m pytest` (konfiguracja w `pyproject.toml`, ~600 testów, ok. 20 s).
-- Build: `python build.py` → regeneracja `web/examples.js`, testy, Nuitka → `dist/DIANA.exe`. Flagi Nuitki opisane w `build.py`.
+- Build: `python build.py` → regeneracja `web/examples.js`, testy, PyInstaller (`--onefile`, ok. 1 min) → `dist/DIANA.exe`. PyInstaller jest tymczasowy – docelowo Electron.
 - CI (`.github/workflows/`): `ci.yml` – pytest przy każdym pushu na `main` i pull requeście; `release.yml` – merge PR na `main` z etykietą `patch`/`minor`/`major` → testy, build na `windows-latest` i GitHub Release `vX.Y.Z` z plikiem `diana-X.Y.Z-windows-x64.exe`. Wersja istnieje **tylko jako tag** (ostatni tag podbity wg etykiety, start `v1.0.0`) – w kodzie nie ma pliku z wersją; nie tworzyć tagów ręcznie. PR bez etykiety nie tworzy wydania.
 - Podgląd samego frontendu bez backendu: konfiguracja `web-static` w `.claude/launch.json` (serwer statyczny na `web/`; `eel` wtedy nie istnieje).
 
@@ -27,7 +27,7 @@ Język projektu: **polski** (UI, komunikaty silnika, komentarze w kodzie, README
 | Plik | Rola |
 |---|---|
 | `main.py` | Punkt wejścia: globalny `excepthook` (MessageBox Windows przez `ctypes` – działa tylko na Windows), `eel.init('web')`, eksponuje `run_d_algorithm(components, target_node, fault_type, user_choices)`, wybór przeglądarki. |
-| `build.py` | Budowanie `.exe` (Nuitka). |
+| `build.py` | Budowanie `.exe` (PyInstaller). |
 | `tests/` | pytest – opis niżej w „Testy”. |
 | `engine.py` | Klasa `DAlgorithmEngine` – cała logika algorytmu. Bez zależności zewnętrznych, można ją testować w izolacji. |
 | `web/index.html` | Cały frontend w jednym pliku (CSS + JS inline, ~940 linii): edytor schematów, zoom/pan, kable z załamaniami, tabela wyników, panel alternatywnych decyzji, autosave do `localStorage` (`d_algo_save`). |

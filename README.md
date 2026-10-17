@@ -64,12 +64,12 @@ Każda tabela wygenerowana przez silnik jest sprawdzana **niezależną wyroczni�
 
 Układy do ręcznego sprawdzania w aplikacji (Plik → Wczytaj układ) wraz z kluczem odpowiedzi są w `tests/fixtures/do-sprawdzenia/`. Na GitHubie testy uruchamia workflow `CI` przy każdym pushu i pull requeście.
 
-### Budowanie `.exe` (Nuitka)
+### Budowanie `.exe` (PyInstaller)
 ```bash
 python build.py               # przykłady -> testy -> dist/DIANA.exe
 python build.py --skip-tests  # bez testów
 ```
-Skrypt regeneruje `web/examples.js`, uruchamia testy i kompiluje `main.py` Nuitką do jednego pliku bez okna konsoli (z wbudowanym folderem `web/` i modułami sieciowymi Eel). Przy pierwszym buildzie Nuitka pobiera do swojego cache Dependency Walker oraz – jeśli nie ma Visual Studio (MSVC) – kompilator C.
+Skrypt regeneruje `web/examples.js`, uruchamia testy i pakuje `main.py` PyInstallerem do jednego pliku bez okna konsoli (z wbudowanym folderem `web/`; pliki Eel dołącza hook PyInstallera). Budowanie trwa ok. minuty.
 
 ### Wydania (GitHub Releases)
 Wydanie powstaje po merge'u PR na `main` oznaczonego etykietą `patch`, `minor` lub `major`. Workflow `Release` uruchamia testy, buduje `.exe` na Windows i publikuje release z plikiem `diana-<wersja>-windows-x64.exe`. Wersja jest wyliczana automatycznie z ostatniego tagu `vX.Y.Z` (pierwsze wydanie: `v1.0.0`) i nie jest zapisana w kodzie:
