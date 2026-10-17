@@ -12,7 +12,7 @@ Błąd dochodzi do G3 dwiema gałęziami (bezpośrednio z W1 i przez G2).
 
 - **Wersja 1.1.0 pokazywała:** G1 s-a-0, domyślne wybory: aplikacja zgłasza „SPRZECZNOŚĆ (Blokada propagacji) na G3! Drugie wejście ma stan D”.
 - **Prawda (do policzenia na kartce):** Dla X1=1, X2=1, X3=0: zdatny G1=1, G2=1, G3=1; z usterką G1=0, G2=0, G3=0 – wyjście się różni, więc błąd przez G3 przechodzi (D AND D = D). Blokady nie ma.
-- **Teraz (domyślne wybory):** propagacja przez G2 (X3=0), a w następnym wierszu błąd przechodzi sam przez G3 (D AND D = D) – TEST X1=1, X2=1, X3=0.
+- **Teraz (domyślne wybory):** propagacja przez G2 (X3=0), potem przez G3 – „Wymagane: Brak”, bo oba wejścia G3 mają już D (D AND D = D) – TEST X1=1, X2=1, X3=0.
 
 ### `blad-2-to-samo-zrodlo.json`
 
@@ -28,7 +28,7 @@ G4 = XOR(XNOR(X1, G1), NOT(G1)) = X1 – wyjście nie zależy od G1, więc uster
 
 - **Wersja 1.1.0 pokazywała:** G1 s-a-0, wybory „Propagacja błędu z G1. Wybierz drogę” → „Przez G3 (NOT)” oraz „Propagacja błędu przez G4” → „G2=1”: aplikacja pokazuje TEST X1=0, X2=0.
 - **Prawda (do policzenia na kartce):** Dla X1=0, X2=0: zdatny G1=1, G2=0, G3=0, G4=0; z usterką G1=0, G2=1, G3=1, G4=XOR(1,1)=0 – wyjście takie samo, to nie jest test. Tabela podaje G2=1, a naprawdę G2 = ~D.
-- **Teraz (domyślne wybory):** po pobudzeniu implikacja daje G4=0, więc błąd nie dociera do wyjścia – SPRZECZNOŚĆ (pusta D-granica). W żadnej ścieżce decyzji nie ma testu, bo usterki nie da się wykryć.
+- **Teraz (domyślne wybory):** propagacja przez G2 i G4, a badanie zgodności kończy się SPRZECZNOŚCIĄ na G3=0 (G3 = NOT G1, a G1 ma D). Przy żadnym wyborze nie ma testu, bo usterki nie da się wykryć.
 
 ### `blad-4-falszywa-sprzecznosc.json`
 
@@ -36,7 +36,7 @@ G3 = XOR(G1, NOT(G1)) = 1 zawsze.
 
 - **Wersja 1.1.0 pokazywała:** G1 s-a-0, wybór „Propagacja błędu z G1. Wybierz drogę” → „Przez G4 (AND)”: aplikacja zgłasza sprzeczność na G3=1; w pozostałych drogach też nie znajduje testu.
 - **Prawda (do policzenia na kartce):** Dla X1=1, X2=1: zdatny G1=1, G3=1, G4=1; z usterką G1=0, G3=1, G4=0 – to jest test. G3=1 da się uzyskać (D XOR ~D = 1), więc sprzeczności nie ma.
-- **Teraz (domyślne wybory):** po pobudzeniu błąd przechodzi sam przez G2 (G2=~D, z tego G3=1) i przez G4 (G4=D) – każde przejście ma swój wiersz; TEST X1=1, X2=1.
+- **Teraz (domyślne wybory):** domyślnie błąd idzie przez G2 i utyka na G3 (docierają do niej D i ~D, które się znoszą) – to prawdziwa sprzeczność tej drogi. „Przez G4 (AND)” w pierwszym „Wybierz drogę” daje TEST X1=1, X2=1 (badanie zgodności G3=1: G1=D, G2=~D).
 
 ### `blad-5-wiersz-po-sprzecznosci.json`
 
@@ -44,13 +44,13 @@ Pobudzenie G1 s-a-0 wymaga X1=0, a ten sam sygnał blokuje propagację przez G2.
 
 - **Wersja 1.1.0 pokazywała:** G1 s-a-0: sprzeczność jest prawdziwa (usterki nie da się wykryć), ale po niej tabela pokazuje jeszcze wiersz „Stan po propagacji (Podsumowanie)”.
 - **Prawda (do policzenia na kartce):** Po sprzeczności próba powinna się kończyć (materiały, str. 37: „Odrzuć błędny test. Cofnij się do najbliższego punktu decyzyjnego”).
-- **Teraz (domyślne wybory):** SPRZECZNOŚĆ (pusta D-granica) kończy próbę, bez wiersza podsumowania.
+- **Teraz (domyślne wybory):** SPRZECZNOŚĆ (Blokada propagacji) na G2 kończy próbę, bez wiersza podsumowania.
 
 ## 2. Przykład z materiałów (str. 41)
 
 ### `materialy-str41.json`
 
-Układ z tabeli „Działanie D-algorytmu” (str. 41). Aplikacja ma tylko bramki 2-wejściowe, więc 3-wejściowy OR G7 jest tu zbudowany z dwóch: G10 = OR(G4, G5) i G7 = OR(G10, G6). Dla **G2 s-a-1** materiały wyznaczają test x1..x6 = x,1,1,1,0,x (ścieżka G3, G5, G7) – porównaj tabelę aplikacji z tabelą ze str. 41.
+Układ z tabeli „Działanie D-algorytmu” (str. 41). Aplikacja ma tylko bramki 2-wejściowe, więc 3-wejściowy OR G7 jest tu zbudowany z dwóch: G10 = OR(G4, G5) i G7 = OR(G10, G6). Dla **G2 s-a-1** materiały wyznaczają test x1..x6 = x,1,1,1,0,x (ścieżka G3, G5, G7 – tutaj G3, G5, G10, G7).
 
 Wejścia w kolejności X1X2X3X4X5X6, wyjścia: G7, G9. Wzorzec z `x` oznacza wszystkie wektory z dowolną wartością w tym miejscu.
 
@@ -293,4 +293,4 @@ Aplikacja daje poprawne tabele dla wszystkich usterek tego układu (sprawdzone w
 
 ## 5. Układy z zajęć (program TESTER)
 
-W `tests/fixtures/tester/` jest 11 układów z TESTER-a w formacie aplikacji – też można je wczytać. Szczególnie ciekawe: `edytor-6` G11 s-a-0 (przykład ze str. 42 – jedyny test 0000 wymaga propagacji dwiema ścieżkami: wybierz kolejno obie bramki z D-granicy), `tester-rosa` G8 s-a-0 (jedyny test X0..X3 = 0111) i `edytor-x` (bramka G8 z oboma wejściami z węzła W10).
+W `tests/fixtures/tester/` jest 11 układów z TESTER-a w formacie aplikacji – też można je wczytać. Szczególnie ciekawe: `edytor-6` G11 s-a-0 (przykład ze str. 42 – jedyny test 0000 wymaga propagacji dwiema ścieżkami: po G13 i G16 wybierz „Przez G14”, potem G17 i dopiero G18), `tester-rosa` G8 s-a-0 (jedyny test X0..X3 = 0111) i `edytor-x` (bramka G8 z oboma wejściami z węzła W10).

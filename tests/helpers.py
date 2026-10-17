@@ -7,8 +7,6 @@ Każde naruszenie ma kategorię, żeby testy mogły odróżnić znane ograniczen
 import json
 import os
 
-import pytest
-
 from engine import DAlgorithmEngine
 from oracle import Oracle, fault_cone
 
@@ -23,18 +21,6 @@ TEST = 'test'                  # wiersz TEST niezgodny z symulacją albo wektor 
 CONFLICT = 'sprzecznosc'       # zgłoszona sprzeczność/blokada/błąd pobudzenia, której w rzeczywistości nie ma
 COMPLETENESS = 'kompletnosc'   # usterka testowalna, a żadna ścieżka decyzji nie daje testu
 OPTIONS = 'opcje'              # wadliwa lista decyzji (powtórzone opcje, wybór poza zakresem)
-
-# Znane rozbieżności obecnego silnika (engine.py). Testy, które je wykrywają, są oznaczone jako oczekiwane
-# porażki; gdy rozbieżność zostanie usunięta, pytest zgłosi XPASS i oznaczenie trzeba zdjąć.
-KNOWN_BUGS = {
-    'format_tabeli': 'tabela różni się formą od materiałów (str. 41): wartości z implikacji pojawiają się wcześniej '
-                     '(np. G4=0 bez osobnego wiersza „Zgodność stanu na G4”), inna kolejność badania zgodności',
-}
-
-
-def known_bug(*keys):
-    return pytest.mark.xfail(strict=True, reason='znana rozbieżność: ' + '; '.join(KNOWN_BUGS[k] for k in keys))
-
 
 def circuit(**spec):
     """Buduje słownik komponentów w formacie aplikacji.
@@ -64,18 +50,18 @@ def explore(components, target, fault_type, limit=20000):
     """Przechodzi drzewo decyzji silnika (każdą kombinację wyborów z list rozwijanych).
 
     Zwraca listę (wybory, wynik) i informację, czy drzewo zostało przejrzane w całości.
+    Każdy przebieg (ciąg decyzji, które naprawdę wystąpiły) jest uruchamiany raz: dla przebiegu z ustalonymi
+    pierwszymi `fixed` decyzjami rozwijane są tylko alternatywy dalszych decyzji.
     """
-    seen, out, stack = set(), [], [{}]
+    out, stack = [], [({}, 0)]
     while stack and len(out) < limit:
-        choices = stack.pop()
-        key = frozenset(choices.items())
-        if key in seen: continue
-        seen.add(key)
-        res = run_engine(components, target, fault_type, dict(choices))
-        out.append((choices, res))
-        for d in res['decision_log']:
-            if d['id'] not in choices:
-                stack.extend({**choices, d['id']: i} for i in range(len(d['options'])))
+        choices, fixed = stack.pop()
+        res = run_engine(components, target, fault_type, choices)
+        log = res['decision_log']
+        out.append(({d['id']: d['selected'] for d in log}, res))
+        for k in range(fixed, len(log)):
+            prefix = {d['id']: d['selected'] for d in log[:k]}
+            stack.extend(({**prefix, log[k]['id']: i}, k + 1) for i in range(len(log[k]['options'])) if i != log[k]['selected'])
     return out, not stack
 
 

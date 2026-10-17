@@ -51,12 +51,13 @@ def test_fanout_through_node_creates_branch_decision():
                     G1=('AND', 'X1', 'X2'), W1=('NODE', 'G1'),
                     G2=('OR', 'W1', 'X3'), G3=('AND', 'W1', 'X4'))
     res = run_engine(comps, 'G1', 'sa0')
-    branch = next(d for d in res['decision_log'] if d['id'] == 'branch_G2_G3')
+    [branch] = res['decision_log']
+    assert branch['id'] == 'branch_G2_G3' and branch['title'] == 'Propagacja błędu. Wybierz drogę:'
     assert [o['label'] for o in branch['options']] == ['Przez G2 (OR)', 'Przez G3 (AND)']
     assert final_state(res)['G2'] == 'D'
 
     s = final_state(run_engine(comps, 'G1', 'sa0', {'branch_G2_G3': 1}))
-    assert (s['G3'], s['X4'], s['W1']) == ('D', '1', 'D')
+    assert (s['G3'], s['X4'], s['W1'], s['G2']) == ('D', '1', 'D', 'x')
 
 
 def test_justification_reaches_primary_inputs():
@@ -143,42 +144,55 @@ def test_no_summary_after_propagation_conflict():
     assert conflict == len(steps) - 1, [s['msg'] for s in steps[conflict:]]
 
 
-# --- Wiersz „Wybór ścieżki propagacji” (jak w materiałach, str. 41) ---
+# --- Przykład z materiałów (str. 41) w wersji z bramkami 2-wejściowymi ---
 
-def test_path_row_follows_chosen_branches():
-    comps = load_circuit(fixtures('do-sprawdzenia')['materialy-str41'])['components']
-    steps = run_engine(comps, 'G2', 'sa1', {'branch_G6_G7': 1})['steps']
-    assert steps[1]['msg'].startswith('Pobudzenie')
-    # G10 – druga bramka 3-wejściowego OR z materiałów; błąd przechodzi przez nią z implikacji
-    assert steps[2]['msg'] == 'Wybór ścieżki propagacji (G3, G5, G10, G7)'
+MATERIALY = load_circuit(fixtures('do-sprawdzenia')['materialy-str41'])['components']
+
+
+def msgs(res):
+    return [s['msg'] for s in res['steps']]
+
+
+def test_material_example_table_rows():
+    res = run_engine(MATERIALY, 'G2', 'sa1')
+    assert msgs(res) == [
+        'Stan początkowy układu',
+        'Pobudzenie błędu: G2. Wymagane: X4=1',
+        'Wybór ścieżki propagacji (G3, G5, G10, G7)',
+        'Propagacja błędu przez G3 (NOR). Wymagane: G1=0',
+        'Propagacja błędu przez G5 (AND). Wymagane: X3=1',
+        'Propagacja błędu przez G10 (OR). Wymagane: G4=0',
+        'Propagacja błędu przez G7 (OR). Wymagane: G6=0',
+        'Stan po propagacji (Podsumowanie)',
+        'Badanie zgodności stanu na G4=0. Wymagane: G1=0',
+        'Badanie zgodności stanu na G1=0. Wymagane: X2=1',
+        'Badanie zgodności stanu na G6=0. Wymagane: X5=0',
+        'TEST (Stan końcowy układu)',
+    ]
+    steps = res['steps']
     assert steps[2]['delta'] == {} and steps[2]['s'] == steps[1]['s']
+    assert steps[5]['delta'] == {'G4': '0', 'G10': 'D'}
+    assert steps[8]['delta'] == {'X1': 'x', 'G1': '0', 'G4': '0'}
+    assert steps[10]['delta'] == {'G2': '~D', 'X5': '0', 'G6': '0'}  # wiersz pokazuje wszystkie wejścia bramki
+    branches = [d for d in res['decision_log'] if d['id'].startswith('branch_')]
+    assert [[o['label'] for o in d['options']] for d in branches] == [
+        ['Przez G3 (NOR)', 'Przez G6 (AND)', 'Przez G8 (AND)'], ['Przez G5 (AND)', 'Przez G6 (AND)', 'Przez G8 (AND)'],
+        ['Przez G10 (OR)', 'Przez G6 (AND)', 'Przez G8 (AND)'], ['Przez G7 (OR)', 'Przez G6 (AND)', 'Przez G8 (AND)']]
 
 
-def test_path_row_of_failed_attempt_lists_reached_gates():
-    comps = load_circuit(fixtures('do-sprawdzenia')['materialy-str41'])['components']
-    steps = run_engine(comps, 'G2', 'sa1')['steps']  # domyślnie G6: D i ~D znoszą się na G7 = OR
-    assert steps[2]['msg'] == 'Wybór ścieżki propagacji (G3, G5, G10, G6)'  # kolejność docierania błędu
-    assert steps[-1]['msg'].startswith('SPRZECZNOŚĆ')
+def test_material_example_other_path():
+    # droga przez G6 daje test 0,x,0,1,1,x – ten sam, który materiały podają na str. 50
+    res = run_engine(MATERIALY, 'G2', 'sa1', {'branch_G3_G6_G8': 1})
+    assert msgs(res)[2] == 'Wybór ścieżki propagacji (G6, G7)'
+    s = final_state(res)
+    assert [s[x] for x in ('X1', 'X2', 'X3', 'X4', 'X5', 'X6')] == ['0', 'x', '0', '1', '1', 'x']
 
 
-def test_gate_passed_without_choice_gets_its_own_row():
-    # G10 = OR(G4, G5): G4 = 0 już ustalone, więc błąd z G5 przechodzi przez G10 bez wyboru – ale ma własny wiersz
-    comps = load_circuit(fixtures('do-sprawdzenia')['materialy-str41'])['components']
-    steps = run_engine(comps, 'G2', 'sa1', {'branch_G6_G7': 1})['steps']
-    msgs = [s['msg'] for s in steps]
-    g5 = next(n for n, m in enumerate(msgs) if m.startswith('Propagacja błędu przez G5'))
-    assert msgs[g5 + 1] == 'Propagacja błędu przez G10 (OR) – wynika z ustalonych wejść: G4=0, G5=D.'
-    assert steps[g5 + 1]['delta'] == {'G10': 'D'} and 'G10' not in steps[g5]['delta']
-    assert msgs[g5 + 2].startswith('Propagacja błędu przez G7')
-
-
-def test_implied_values_go_to_the_row_they_follow_from():
-    # G3 = XOR(G1, G2) = 1 wynika z G2 = NOT(G1) = ~D, więc dopisek jest w wierszu przejścia przez G2
-    data = load_circuit(fixtures('do-sprawdzenia')['blad-4-falszywa-sprzecznosc'])
-    msgs = [s['msg'] for s in run_engine(data['components'], 'G1', 'sa0')['steps']]
-    assert msgs[1] == 'Pobudzenie błędu: G1. Wymagane: X1=1, X2=1'
-    assert msgs[3] == 'Propagacja błędu przez G2 (NOT) – wynika z ustalonych wejść: G1=D. Implikacja: G3=1.'
-    assert msgs[4] == 'Propagacja błędu przez G4 (AND) – wynika z ustalonych wejść: G1=D, G3=1.'
+def test_material_example_paths_that_cancel():
+    # do G7 dociera D (przez G10) i ~D (przez G6), OR(D, ~D) = 1
+    res = run_engine(MATERIALY, 'G2', 'sa1', {'branch_G10_G6_G8': 1, 'branch_G7_G10_G8': 1})
+    assert msgs(res)[2] == 'Wybór ścieżki propagacji (G3, G5, G6, G10, G7)'
+    assert msgs(res)[-1] == 'SPRZECZNOŚĆ (Blokada propagacji) na G7! Błąd nie przechodzi (D i ~D znoszą się).'
 
 
 def test_no_path_row_when_fault_is_on_output():
