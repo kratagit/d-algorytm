@@ -8,7 +8,7 @@ Wskazówki dla Claude Code przy pracy w tym repozytorium.
 
 Nazwa aplikacji to **DIANA**; „D-Algorytm” oznacza wyłącznie sam algorytm (np. `DAlgorithmEngine`). Repozytorium na GitHubie nazywa się nadal `d-algorytm`.
 
-Kierunek rozwoju (temat pracy): drugi silnik **PODEM** z heurystykami SCOAP – koszty sterowalności `c0`, `c1` i obserwowalności `O` każdej linii – oraz porównanie wydajności D-Algorytmu i PODEM (np. liczba nawrotów w drzewie przeszukiwań) na topologiach ze ścieżkami zbieżnymi i redundancją; do tego zestaw ćwiczeń laboratoryjnych.
+Kierunek rozwoju (temat pracy): drugi silnik **PODEM** z heurystykami SCOAP – koszty sterowalności `c0`, `c1` i obserwowalności `O` każdej linii – oraz porównanie wydajności D-Algorytmu i PODEM (np. liczba nawrotów w drzewie przeszukiwań) na topologiach ze ścieżkami zbieżnymi i redundancją; do tego zestaw ćwiczeń laboratoryjnych. **Obecnie zajmujemy się wyłącznie D-algorytmem** – PODEM i miary sterowalności/obserwowalności dopiero później.
 
 Język projektu: **polski** (UI, komunikaty silnika, komentarze w kodzie, README).
 
@@ -17,7 +17,7 @@ Język projektu: **polski** (UI, komunikaty silnika, komentarze w kodzie, README
 - Python 3.14 + [Eel](https://github.com/python-eel/Eel) (most WebSocket Python ↔ przeglądarka). Frontend: czysty HTML/CSS/JS + SVG, bez frameworków i bez bundlera.
 - Środowisko: `.venv` w katalogu projektu; `requirements.txt` – runtime (Eel), `requirements-dev.txt` – dodatkowo Nuitka i pytest. Python wołać jako `.venv/Scripts/python`.
 - Uruchomienie: `python main.py` – otwiera okno Chrome / Edge (fallback: domyślna przeglądarka), port losowy (`port=0`).
-- Testy: `python -m pytest` (konfiguracja w `pyproject.toml`, ~170 testów, kilka sekund).
+- Testy: `python -m pytest` (konfiguracja w `pyproject.toml`, ~600 testów, ok. 30 s).
 - Build: `python build.py` → regeneracja `web/examples.js`, testy, Nuitka → `dist/DIANA.exe`. Flagi Nuitki opisane w `build.py`.
 - CI (`.github/workflows/`): `ci.yml` – pytest przy każdym pushu na `main` i pull requeście; `release.yml` – merge PR na `main` z etykietą `patch`/`minor`/`major` → testy, build na `windows-latest` i GitHub Release `vX.Y.Z` z plikiem `diana-X.Y.Z-windows-x64.exe`. Wersja istnieje **tylko jako tag** (ostatni tag podbity wg etykiety, start `v1.0.0`) – w kodzie nie ma pliku z wersją; nie tworzyć tagów ręcznie. PR bez etykiety nie tworzy wydania.
 - Podgląd samego frontendu bez backendu: konfiguracja `web-static` w `.claude/launch.json` (serwer statyczny na `web/`; `eel` wtedy nie istnieje).
@@ -28,7 +28,7 @@ Język projektu: **polski** (UI, komunikaty silnika, komentarze w kodzie, README
 |---|---|
 | `main.py` | Punkt wejścia: globalny `excepthook` (MessageBox Windows przez `ctypes` – działa tylko na Windows), `eel.init('web')`, eksponuje `run_d_algorithm(components, target_node, fault_type, user_choices)`, wybór przeglądarki. |
 | `build.py` | Budowanie `.exe` (Nuitka). |
-| `tests/` | pytest. `conftest.py` zawiera helper `circuit(...)`, niezależny symulator (`simulate`, `detects`) i `explore` (przejście całego drzewa decyzji). `test_examples.py` weryfikuje każdy wygenerowany test na przykładach symulacją z usterką. |
+| `tests/` | pytest – opis niżej w „Testy”. |
 | `engine.py` | Klasa `DAlgorithmEngine` – cała logika algorytmu. Bez zależności zewnętrznych, można ją testować w izolacji. |
 | `web/index.html` | Cały frontend w jednym pliku (CSS + JS inline, ~940 linii): edytor schematów, zoom/pan, kable z załamaniami, tabela wyników, panel alternatywnych decyzji, autosave do `localStorage` (`d_algo_save`). |
 | `web/examples.js` | **Generowany** – `const EXAMPLES = {...}`. Nie edytować ręcznie. |
@@ -62,13 +62,27 @@ Ważne szczegóły:
 - Kolejność kolumn: `IN` → bramki → `NODE`, w obrębie grupy wg cyfr w nazwie (`sort_key`) – nazwy bez cyfr dostają 0.
 - Komunikaty kroków są po polsku i trafiają bezpośrednio do tabeli w UI (renderowane jako HTML).
 
+## Testy
+
+- `tests/oracle.py` – **niezależna wyrocznia** (nie importuje silnika): symulacja 0/1 i w D-algebrze dla bramek o dowolnej liczbie wejść, `Oracle` (wszystkie wektory wejściowe z wartościami linii dla jednej usterki; `realizable(stan)` mówi, czy przypisania z tabeli da się zrealizować).
+- `tests/helpers.py` – uruchamianie silnika, `explore` (przejście całego drzewa decyzji; przekroczenie limitu 20 000 przebiegów to błąd testu, a nie ciche pominięcie), `check_run`/`check_fault` (zasady poprawnej tabeli z kategoriami naruszeń: `struktura`, `test`, `sprzecznosc`, `kompletnosc`, `opcje`), `KNOWN_BUGS` + `known_bug(...)` (oznaczenie `xfail(strict=True)`).
+- `test_examples.py` – przykłady aplikacji, układy z zajęć (`tests/fixtures/tester/*.json`, z `konwertuj_gat.py`) i układ ze str. 41 w wersji 2-wejściowej; pilnuje też, by klucz odpowiedzi w `tests/fixtures/do-sprawdzenia/README.md` zgadzał się z wyrocznią. `test_materials.py` – tabele 2–5 i przykłady z `Materiały.pdf` (`tests/fixtures/materialy/uklad-g1-g9.json` – układ ze str. 33/41 z 3-wejściowym OR). `test_random.py` – 2×150 losowych układów (`random_circuits.py`, 2–5 wejść, 3–10 bramek, rozgałęzienie zawsze przez jeden węzeł). `test_engine.py` – scenariusze i minimalne układy znanych błędów (`tests/fixtures/do-sprawdzenia/blad-*.json`). `test_gates.py` – funkcje bramek.
+- `tests/fixtures/do-sprawdzenia/` – układy do ręcznego sprawdzania w aplikacji (Plik → Wczytaj układ) z kluczem odpowiedzi w `README.md` (wszystkie testy każdej usterki wg wyroczni, zapis wzorcami z x).
+- Po naprawie błędu z `KNOWN_BUGS` pytest zgłosi XPASS – wtedy usuń oznaczenie `known_bug` (i wpis w `KNOWN` w `test_examples.py`).
+- Znane błędy obecnego silnika: propagacja tylko jedną ścieżką (brak wielu ścieżek – materiały str. 42); D na obu wejściach bramki traktowane jako blokada; bramka z oboma wejściami z tego samego sygnału daje fałszywy TEST; badanie zgodności nie stosuje D-algebry (skrót „bramka już spełniona” liczy D/~D jak 0) – fałszywe wartości w tabeli, fałszywe testy i fałszywe sprzeczności w układach z rekonwergencją; wiersz podsumowania po sprzeczności; brak bramek >2 wejść.
+
+## Materiały źródłowe (poza repozytorium)
+
+- `../Materiały.pdf` – wykład/instrukcje: D-algebra i Tabela 2 (str. 32–36, **errata**: kolumny f_AND i f_OR zamienione, w wierszu (~D,~D) f_AND = D zamiast ~D), D-algorytm z Tabelami 3–5 i przykładem tabeli (str. 37–41), przykład wymagający propagacji wieloma ścieżkami (str. 42), miary sterowalności/obserwowalności (str. 43–45; uwaga: c¹(x) = 0 dla komplementarnych wejść na str. 44 wygląda na błąd – powinno być „nieosiągalne”), PODEM z wagami WO/WK i przykładem (str. 46–50). Druga wersja tego samego wykładu: str. 61–69.
+- `../MiDST/TESTER/` – program TESTER (Turbo Pascal for Windows, 1996) używany na zajęciach, **z kodem źródłowym**: `DALGEBRA.PAS` (D-sześciany), `MYOBJCTS.PAS` (pobudzenie, propagacja wskazaną przez studenta ścieżką, badanie zgodności, tryb testu z punktacją), `TESTER.PAS` (UI). Pliki `.PAS` w CP1250. Bramki max 2-wejściowe, usterki na wejściach elementów. `../MiDST/EDYTOR/` – edytor schematów, `scanedu/` – niezwiązane (boundary scan).
+
 ## Konwencje
 
 - **Priorytetem jest czystość kodu i przejrzystość repozytorium.** Wybieraj najprostsze rozwiązanie; nie dodawaj narzędzi, automatyzacji ani warstw, które nie są niezbędne (np. wersja nie jest zapisywana w kodzie ani wyliczana z commitów – decyduje etykieta PR).
 - Styl kodu zwarty (wiele instrukcji w jednej linii, krótkie nazwy zmiennych) – zachowywać spójność z otoczeniem.
 - Zmiany w strukturze komponentu muszą być zgodne po obu stronach (`index.html`: `add`, `restoreComponents`, `saveWorkspace`, `autoSave`; `engine.py`) oraz ze starymi plikami JSON/`localStorage`.
 - Po zmianie przykładów JSON uruchomić `python buduj_przyklady.py`.
-- Po zmianach w `engine.py` uruchomić `python -m pytest`. `test_examples.py` wymaga, by każdy wektor kończący się wierszem „TEST” faktycznie wykrywał usterkę i by każda testowalna usterka miała co najmniej jedną ścieżkę decyzji prowadzącą do testu.
+- Po zmianach w `engine.py` uruchomić `python -m pytest`. Poprawność tabel rozstrzyga wyrocznia (`tests/oracle.py`), a nie porównanie z poprzednim wynikiem silnika.
 - Komunikaty skryptów wypisywane po polsku – `sys.stdout.reconfigure(encoding='utf-8')` jest potrzebne w konsoli Windows (cp1252).
 - Commity: Conventional Commits po angielsku (`feat:`, `fix:`, `chore:`, `refactor:`…).
 - **Przy tworzeniu PR zawsze zapytaj użytkownika o rodzaj wydania** – `patch` / `minor` / `major` / bez wydania – podając swoją propozycję z krótkim uzasadnieniem, i ustaw wybraną etykietę na PR (`gh pr create --label …` lub `gh pr edit --add-label …`). Bez etykiety PR nie tworzy release'u.

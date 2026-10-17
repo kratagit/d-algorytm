@@ -1,0 +1,134 @@
+{
+  "opis": "random_circuit(seed=3, reconvergent=False) z tests/random_circuits.py",
+  "components": {
+    "X1": {
+      "id": "X1",
+      "type": "IN",
+      "x": 60,
+      "y": 60,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X2": {
+      "id": "X2",
+      "type": "IN",
+      "x": 60,
+      "y": 170,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X3": {
+      "id": "X3",
+      "type": "IN",
+      "x": 60,
+      "y": 280,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G4": {
+      "id": "G4",
+      "type": "NAND",
+      "x": 250,
+      "y": 115,
+      "inputs": [
+        "X2",
+        "X1"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G5": {
+      "id": "G5",
+      "type": "NOT",
+      "x": 250,
+      "y": 280,
+      "inputs": [
+        "X3",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G6": {
+      "id": "G6",
+      "type": "OR",
+      "x": 440,
+      "y": 225,
+      "inputs": [
+        "G5",
+        "W8"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G7": {
+      "id": "G7",
+      "type": "NOT",
+      "x": 630,
+      "y": 225,
+      "inputs": [
+        "G6",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W8": {
+      "id": "W8",
+      "type": "NODE",
+      "x": 370,
+      "y": 142,
+      "inputs": [
+        "G4",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G9": {
+      "id": "G9",
+      "type": "NOT",
+      "x": 440,
+      "y": 115,
+      "inputs": [
+        "W8",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    }
+  },
+  "counter": 9,
+  "target": "G4",
+  "fault_type": "sa0"
+}

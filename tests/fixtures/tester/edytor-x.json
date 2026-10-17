@@ -1,0 +1,147 @@
+{
+  "opis": "Układ z zajęć (EDYTOR X.GAT) – bramka AND z oboma wejściami z tego samego węzła.",
+  "zrodlo": "MiDST/EDYTOR/X.GAT",
+  "components": {
+    "G0": {
+      "id": "G0",
+      "type": "NOT",
+      "x": 307,
+      "y": 410,
+      "inputs": [
+        "W7",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X1": {
+      "id": "X1",
+      "type": "IN",
+      "x": 102,
+      "y": 250,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X2": {
+      "id": "X2",
+      "type": "IN",
+      "x": 102,
+      "y": 365,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X3": {
+      "id": "X3",
+      "type": "IN",
+      "x": 102,
+      "y": 518,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G4": {
+      "id": "G4",
+      "type": "AND",
+      "x": 512,
+      "y": 256,
+      "inputs": [
+        "X1",
+        "W7"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G5": {
+      "id": "G5",
+      "type": "AND",
+      "x": 512,
+      "y": 461,
+      "inputs": [
+        "G0",
+        "X3"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G6": {
+      "id": "G6",
+      "type": "NOR",
+      "x": 717,
+      "y": 358,
+      "inputs": [
+        "G4",
+        "G5"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W7": {
+      "id": "W7",
+      "type": "NODE",
+      "x": 269,
+      "y": 378,
+      "inputs": [
+        "X2",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G8": {
+      "id": "G8",
+      "type": "AND",
+      "x": 1229,
+      "y": 358,
+      "inputs": [
+        "W10",
+        "W10"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W10": {
+      "id": "W10",
+      "type": "NODE",
+      "x": 1062,
+      "y": 378,
+      "inputs": [
+        "G6",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    }
+  },
+  "counter": 11
+}

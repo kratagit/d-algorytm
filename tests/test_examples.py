@@ -1,56 +1,91 @@
-"""Testy na przykładowych układach z repozytorium (1.json, 2.json, ...).
+"""Przykłady wbudowane w aplikację oraz układy z zajęć (program TESTER, tests/fixtures/tester).
 
-Dla każdej bramki, każdego typu usterki i każdej ścieżki w drzewie decyzji
-sprawdzamy niezależnym symulatorem, że wygenerowany wektor faktycznie wykrywa usterkę.
+Dla każdej bramki, obu typów usterki i każdej ścieżki w drzewie decyzji sprawdzamy niezależną wyrocznią,
+że tabela jest zgodna z prawdą: test wykrywa usterkę, wartości linii zgadzają się z symulacją,
+każda sprzeczność jest prawdziwa, a każda testowalna usterka ma ścieżkę prowadzącą do testu.
 """
+import itertools
 import os
+import re
 
 import pytest
 
 import buduj_przyklady
-from conftest import (detects, example_files, explore, fill_dont_cares, final_state,
-                      is_testable, load_example)
+from helpers import ROOT, app_examples, check_fault, fixtures, gate_targets, known_bug, load_circuit, report
+from oracle import Oracle, gate_inputs, primary_inputs, primary_outputs
 
-CASES = []
-for _f in example_files():
-    _comps = load_example(_f)['components']
-    for _t in sorted(c for c, v in _comps.items() if v['type'] not in ('IN', 'NODE')):
-        for _ft in ('sa0', 'sa1'):
-            CASES.append(pytest.param(_f, _t, _ft, id=f"{_f[:-5]}-{_t}-{_ft}"))
+MANUAL = fixtures('do-sprawdzenia')
+CIRCUITS = {**app_examples(), **fixtures('tester'), 'materialy-str41': MANUAL['materialy-str41']}
 
-
-def test_examples_exist():
-    assert example_files(), "brak przykładowych układów *.json"
-
-
-@pytest.mark.parametrize('fname,target,fault', CASES)
-def test_every_generated_test_detects_fault(fname, target, fault):
-    comps = load_example(fname)['components']
-    stuck = 0 if fault == 'sa0' else 1
-    runs = explore(comps, target, fault)
-    for choices, res in runs:
-        s = final_state(res)
-        if s is None:
-            assert any('ERR' in st['delta'].values() or st['msg'].startswith('BŁĄD')
-                       for st in res['steps']), f"zakończono bez testu i bez sprzeczności: {choices}"
-            continue
-        assert s[target] == ('D' if fault == 'sa0' else '~D')
-        for vec in fill_dont_cares(comps, s):
-            assert detects(comps, vec, target, stuck), f"wektor {vec} nie wykrywa {target} {fault} (wybory {choices})"
+KNOWN = {  # (układ, linia, usterka) -> znane błędy silnika
+    ('edytor-6', 'G11', 'sa0'): ('jedna_sciezka',),
+    ('tester-rosa', 'G8', 'sa0'): ('jedna_sciezka',),
+    ('edytor-x', 'G8', 'sa1'): ('to_samo_zrodlo',),
+    **{('edytor-x', g, f): ('zbiezne_d', 'jedna_sciezka') for g in ('G0', 'G4', 'G5', 'G6') for f in ('sa0', 'sa1')},
+}
 
 
-@pytest.mark.parametrize('fname,target,fault', CASES)
-def test_testable_faults_are_found_on_some_path(fname, target, fault):
-    comps = load_example(fname)['components']
-    stuck = 0 if fault == 'sa0' else 1
-    if not is_testable(comps, target, stuck):
-        pytest.skip("usterka nietestowalna (redundantna)")
-    runs = explore(comps, target, fault)
-    assert any(final_state(res) is not None for _, res in runs), "żadna ścieżka decyzji nie daje testu"
+def _cases():
+    for name, path in CIRCUITS.items():
+        comps = load_circuit(path)['components']
+        for target in gate_targets(comps):
+            for fault in ('sa0', 'sa1'):
+                bugs = KNOWN.get((name, target, fault))
+                yield pytest.param(name, target, fault, id=f'{name}-{target}-{fault}', marks=[known_bug(*bugs)] if bugs else [])
 
 
-def test_examples_js_is_up_to_date(root_dir):
-    with open(os.path.join(root_dir, 'web', 'examples.js'), encoding='utf-8') as f:
+def test_circuits_exist():
+    assert app_examples(), 'brak przykładowych układów [NUMER].json'
+    assert len(fixtures('tester')) == 11
+
+
+@pytest.mark.parametrize('name,target,fault', list(_cases()))
+def test_tables_are_true(name, target, fault):
+    problems = check_fault(load_circuit(CIRCUITS[name])['components'], target, fault)
+    assert not problems, report(problems)
+
+
+def test_examples_js_is_up_to_date():
+    with open(os.path.join(ROOT, 'web', 'examples.js'), encoding='utf-8') as f:
         current = f.read()
-    assert current == buduj_przyklady.generuj_examples_js(root_dir), \
-        "web/examples.js jest nieaktualny - uruchom: python buduj_przyklady.py"
+    assert current == buduj_przyklady.generuj_examples_js(ROOT), \
+        'web/examples.js jest nieaktualny - uruchom: python buduj_przyklady.py'
+
+
+def _structure(comps):
+    """Wyrażenia opisujące wyjścia układu niezależnie od nazw elementów i kolejności wejść bramek."""
+    memo = {}
+
+    def expr(cid):
+        if cid not in memo:
+            c = comps[cid]
+            ins = sorted(expr(i) for i in gate_inputs(c))
+            memo[cid] = 'IN' if c['type'] == 'IN' else ins[0] if c['type'] == 'NODE' else f"{c['type']}({','.join(ins)})"
+        return memo[cid]
+
+    return sorted(expr(o) for o in primary_outputs(comps))
+
+
+@pytest.mark.parametrize('n', ['1', '2', '4', '5'])
+def test_tester_conversion_matches_app_examples(n):
+    """Przykłady 1, 2, 4, 5 odtworzono kiedyś w aplikacji ręcznie z TESTER-a – konwerter .GAT musi dać ten sam układ."""
+    app = load_circuit(CIRCUITS[f'przyklad-{n}'])['components']
+    converted = load_circuit(CIRCUITS[f'tester-{n}'])['components']
+    assert _structure(app) == _structure(converted)
+
+
+def test_manual_answer_key_is_true():
+    """Klucz odpowiedzi w tests/fixtures/do-sprawdzenia/README.md zgadza się z wyrocznią (rozwinięte wzorce = wszystkie testy)."""
+    with open(os.path.join(ROOT, 'tests', 'fixtures', 'do-sprawdzenia', 'README.md'), encoding='utf-8') as f:
+        sections = re.split(r'\n### `', f.read())[1:]
+    rows = 0
+    for section in sections:
+        comps = load_circuit(MANUAL[section.split('.json')[0]])['components']
+        pis = primary_inputs(comps)
+        for target, stuck, cell in re.findall(r'^\| (\S+) s-a-([01]) \| (.*) \|$', section, re.M):
+            listed = {''.join(bits) for pattern in re.findall(r'`([01x]+)`', cell)
+                      for bits in itertools.product(*[('0', '1') if ch == 'x' else (ch,) for ch in pattern])}
+            truth = {''.join(str(v[p]) for p in pis) for v in Oracle(comps, target, int(stuck)).tests()}
+            assert listed == truth, (section.split('.json')[0], target, stuck)
+            rows += 1
+    assert rows > 100

@@ -2,8 +2,11 @@ import itertools
 
 import pytest
 
-from conftest import GATES, _LOGIC, circuit
+from helpers import circuit
+from oracle import LOGIC
 from engine import DAlgorithmEngine
+
+GATES = ['AND', 'OR', 'NAND', 'NOR', 'XOR', 'XNOR']
 
 
 @pytest.fixture
@@ -14,7 +17,7 @@ def eng():
 @pytest.mark.parametrize('gate', GATES)
 def test_eval_gate_truth_table(eng, gate):
     for a, b in itertools.product([0, 1], repeat=2):
-        assert eng.eval_gate(gate, str(a), str(b)) == str(_LOGIC[gate](a, b))
+        assert eng.eval_gate(gate, str(a), str(b)) == str(LOGIC[gate]([a, b]))
 
 
 def test_eval_gate_not_and_passthrough(eng):
@@ -50,9 +53,9 @@ def test_justifications_are_sound_and_complete(eng, gate, val):
     for cand in cands:
         for a, b in itertools.product([0, 1], repeat=2):
             if cand[0] in ('x', str(a)) and cand[1] in ('x', str(b)):
-                assert str(_LOGIC[gate](a, b)) == val, (cand, a, b)
+                assert str(LOGIC[gate]([a, b])) == val, (cand, a, b)
     for a, b in itertools.product([0, 1], repeat=2):
-        if str(_LOGIC[gate](a, b)) == val:
+        if str(LOGIC[gate]([a, b])) == val:
             assert any(c[0] in ('x', str(a)) and c[1] in ('x', str(b)) for c in cands), (a, b)
 
 

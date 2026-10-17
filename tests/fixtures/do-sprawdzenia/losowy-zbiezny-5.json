@@ -1,0 +1,176 @@
+{
+  "opis": "random_circuit(seed=144, reconvergent=True) z tests/random_circuits.py",
+  "components": {
+    "X1": {
+      "id": "X1",
+      "type": "IN",
+      "x": 60,
+      "y": 60,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X2": {
+      "id": "X2",
+      "type": "IN",
+      "x": 60,
+      "y": 170,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X3": {
+      "id": "X3",
+      "type": "IN",
+      "x": 60,
+      "y": 280,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X4": {
+      "id": "X4",
+      "type": "IN",
+      "x": 60,
+      "y": 390,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G5": {
+      "id": "G5",
+      "type": "XNOR",
+      "x": 250,
+      "y": 170,
+      "inputs": [
+        "X1",
+        "X3"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G6": {
+      "id": "G6",
+      "type": "XOR",
+      "x": 440,
+      "y": 170,
+      "inputs": [
+        "W7",
+        "X2"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W7": {
+      "id": "W7",
+      "type": "NODE",
+      "x": 370,
+      "y": 197,
+      "inputs": [
+        "G5",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G8": {
+      "id": "G8",
+      "type": "XOR",
+      "x": 440,
+      "y": 280,
+      "inputs": [
+        "W7",
+        "X4"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G9": {
+      "id": "G9",
+      "type": "XOR",
+      "x": 630,
+      "y": 170,
+      "inputs": [
+        "W7",
+        "W11"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G10": {
+      "id": "G10",
+      "type": "NOT",
+      "x": 630,
+      "y": 280,
+      "inputs": [
+        "G8",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W11": {
+      "id": "W11",
+      "type": "NODE",
+      "x": 560,
+      "y": 197,
+      "inputs": [
+        "G6",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G12": {
+      "id": "G12",
+      "type": "XNOR",
+      "x": 820,
+      "y": 170,
+      "inputs": [
+        "W11",
+        "G9"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    }
+  },
+  "counter": 12,
+  "target": "G10",
+  "fault_type": "sa0"
+}

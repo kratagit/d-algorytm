@@ -1,0 +1,105 @@
+{
+  "opis": "Układ z zajęć (EDYTOR qaz.gat).",
+  "zrodlo": "MiDST/EDYTOR/qaz.gat",
+  "components": {
+    "G0": {
+      "id": "G0",
+      "type": "AND",
+      "x": 102,
+      "y": 102,
+      "inputs": [
+        "X1",
+        "W2"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X1": {
+      "id": "X1",
+      "type": "IN",
+      "x": 0,
+      "y": 32,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W2": {
+      "id": "W2",
+      "type": "NODE",
+      "x": 90,
+      "y": 262,
+      "inputs": [
+        "X4",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G3": {
+      "id": "G3",
+      "type": "AND",
+      "x": 205,
+      "y": 205,
+      "inputs": [
+        "W2",
+        "X5"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X4": {
+      "id": "X4",
+      "type": "IN",
+      "x": 0,
+      "y": 109,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X5": {
+      "id": "X5",
+      "type": "IN",
+      "x": 0,
+      "y": 198,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G6": {
+      "id": "G6",
+      "type": "AND",
+      "x": 410,
+      "y": 102,
+      "inputs": [
+        "G0",
+        "G3"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    }
+  },
+  "counter": 8
+}

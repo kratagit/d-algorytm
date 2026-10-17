@@ -55,7 +55,16 @@ python main.py
 ```bash
 python -m pytest
 ```
-Testy (`tests/`) obejmują logikę bramek, scenariusze D-Algorytmu na małych układach oraz wszystkie przykładowe układy: dla każdej bramki, typu usterki i każdej ścieżki w drzewie decyzji wygenerowany wektor jest weryfikowany niezależnym symulatorem z wstrzykniętą usterką. Na GitHubie testy uruchamia workflow `CI` przy każdym pushu i pull requeście.
+Każda tabela wygenerowana przez silnik jest sprawdzana **niezależną wyrocznią** (`tests/oracle.py` – symulacja układu zdatnego i z usterką w D-algebrze, bez użycia kodu silnika): wektor z wiersza „TEST” musi wykrywać usterkę, wartości linii muszą zgadzać się z symulacją, każda zgłoszona sprzeczność musi być prawdziwa, a każda testowalna usterka musi mieć ścieżkę decyzji prowadzącą do testu. Sprawdzane są wszystkie ścieżki decyzji dla:
+
+* przykładów wbudowanych w aplikację,
+* 11 układów z zajęć (program TESTER, `tests/fixtures/tester/`, konwertowane z plików `*.GAT`),
+* 300 losowych układów wielkości jak na zajęciach (2–5 wejść, 3–10 bramek) – z rekonwergencją i bez,
+* tabel D-algebry i D-sześcianów oraz rozwiązanych przykładów z materiałów do zajęć (`tests/test_materials.py`).
+
+Znane błędy obecnego silnika są opisane w `tests/helpers.py` (`KNOWN_BUGS`), a testy, które je wykrywają, są oznaczone jako oczekiwane porażki (`xfail`).
+
+Układy do ręcznego sprawdzania w aplikacji (Plik → Wczytaj układ) wraz z kluczem odpowiedzi są w `tests/fixtures/do-sprawdzenia/`. Na GitHubie testy uruchamia workflow `CI` przy każdym pushu i pull requeście.
 
 ### Budowanie `.exe` (Nuitka)
 ```bash

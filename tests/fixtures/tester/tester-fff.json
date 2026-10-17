@@ -1,0 +1,105 @@
+{
+  "opis": "Układ z zajęć (TESTER fff.gat).",
+  "zrodlo": "MiDST/TESTER/fff.gat",
+  "components": {
+    "X0": {
+      "id": "X0",
+      "type": "IN",
+      "x": 102,
+      "y": 173,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X1": {
+      "id": "X1",
+      "type": "IN",
+      "x": 102,
+      "y": 275,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X2": {
+      "id": "X2",
+      "type": "IN",
+      "x": 102,
+      "y": 378,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X3": {
+      "id": "X3",
+      "type": "IN",
+      "x": 102,
+      "y": 480,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G4": {
+      "id": "G4",
+      "type": "OR",
+      "x": 307,
+      "y": 154,
+      "inputs": [
+        "X0",
+        "X1"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G5": {
+      "id": "G5",
+      "type": "OR",
+      "x": 307,
+      "y": 410,
+      "inputs": [
+        "X2",
+        "X3"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G6": {
+      "id": "G6",
+      "type": "XNOR",
+      "x": 512,
+      "y": 256,
+      "inputs": [
+        "G4",
+        "G5"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    }
+  },
+  "counter": 8
+}

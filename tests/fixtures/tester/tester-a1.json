@@ -1,0 +1,119 @@
+{
+  "opis": "Układ z zajęć (TESTER a1.gat).",
+  "zrodlo": "MiDST/TESTER/a1.gat",
+  "components": {
+    "X0": {
+      "id": "X0",
+      "type": "IN",
+      "x": 205,
+      "y": 211,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W1": {
+      "id": "W1",
+      "type": "NODE",
+      "x": 410,
+      "y": 211,
+      "inputs": [
+        "X0",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G2": {
+      "id": "G2",
+      "type": "AND",
+      "x": 614,
+      "y": 102,
+      "inputs": [
+        "W1",
+        "W8"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G3": {
+      "id": "G3",
+      "type": "AND",
+      "x": 614,
+      "y": 256,
+      "inputs": [
+        "W1",
+        "W8"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X4": {
+      "id": "X4",
+      "type": "IN",
+      "x": 205,
+      "y": 45,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "X5": {
+      "id": "X5",
+      "type": "IN",
+      "x": 154,
+      "y": 378,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G7": {
+      "id": "G7",
+      "type": "AND",
+      "x": 819,
+      "y": 51,
+      "inputs": [
+        "X4",
+        "G2"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W8": {
+      "id": "W8",
+      "type": "NODE",
+      "x": 499,
+      "y": 352,
+      "inputs": [
+        "X5",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    }
+  },
+  "counter": 10
+}

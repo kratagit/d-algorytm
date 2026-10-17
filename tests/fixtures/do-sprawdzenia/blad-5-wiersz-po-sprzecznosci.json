@@ -1,0 +1,63 @@
+{
+  "components": {
+    "X1": {
+      "id": "X1",
+      "type": "IN",
+      "x": 60,
+      "y": 60,
+      "inputs": [
+        null,
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "W1": {
+      "id": "W1",
+      "type": "NODE",
+      "x": 180,
+      "y": 72,
+      "inputs": [
+        "X1",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G1": {
+      "id": "G1",
+      "type": "NOT",
+      "x": 250,
+      "y": 60,
+      "inputs": [
+        "W1",
+        null
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    },
+    "G2": {
+      "id": "G2",
+      "type": "AND",
+      "x": 440,
+      "y": 60,
+      "inputs": [
+        "G1",
+        "W1"
+      ],
+      "waypoints": [
+        [],
+        []
+      ]
+    }
+  },
+  "counter": 4,
+  "target": "G1",
+  "fault_type": "sa0"
+}
